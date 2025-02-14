@@ -1,7 +1,9 @@
 public class HelloWorld{
-    public static void main(String[] args) {System.out.println("Hello World");int a = 10;}
-    public void test(){System.out.println("Hello World");}
-    public void test2()
+    private int AA = 10;
+    public final static int bb = 10;
+    public static void main(String[] args) {System.out.println("Hello World"); int c = 10;}
+    public void Test(){System.out.println("Hello World");}
+    public void Test2()
     {
         if (true)
         {

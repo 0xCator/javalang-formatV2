@@ -4,6 +4,13 @@
     "space_around_operators": true,
     "max_line_length": 100,
     "class_modifier_order": ["public", "abstract", "final"],
-    "method_modifier_order": ["public", "static", "final"]
+    "method_modifier_order": ["public", "static", "final"],
+    "naming_conventions": {
+        "class": "PascalCase",
+        "method": "camelCase",
+        "variable": "camelCase",
+        "parameter": "camelCase",
+        "constant": "UPPER_CASE"
+    }
 }
 
