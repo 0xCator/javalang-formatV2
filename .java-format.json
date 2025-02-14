@@ -4,6 +4,13 @@
     "space_around_operators": true,
     "max_line_length": 100,
     "class_modifier_order": ["public", "abstract", "final"],
-    "method_modifier_order": ["public", "static", "final"]
+    "method_modifier_order": ["public", "static", "final"],
+    "naming_conventions": {
+        "class": "[A-Z][a-zA-Z0-9]*",
+        "method": "camelcase",
+        "variable": "[a-z][a-zA-Z0-9]*",
+        "parameter": "camelcase",
+        "constant": "uppercase"
+    }
 }
 
