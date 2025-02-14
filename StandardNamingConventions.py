@@ -1,6 +1,6 @@
 from enum import Enum
 
 class StandardNamingConventions(Enum):
-    PASCAL_CASE = "PascalCase"
-    CAMEL_CASE = "camelCase"
-    UPPER_CASE = "UPPER_CASE"
+    PASCAL_CASE = "pascalcase"
+    CAMEL_CASE = "camelcase"
+    UPPER_CASE = "uppercase"

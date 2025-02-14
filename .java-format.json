@@ -6,11 +6,11 @@
     "class_modifier_order": ["public", "abstract", "final"],
     "method_modifier_order": ["public", "static", "final"],
     "naming_conventions": {
-        "class": "PascalCase",
-        "method": "camelCase",
-        "variable": "camelCase",
-        "parameter": "camelCase",
-        "constant": "UPPER_CASE"
+        "class": "[A-Z][a-zA-Z0-9]*",
+        "method": "camelcase",
+        "variable": "[a-z][a-zA-Z0-9]*",
+        "parameter": "camelcase",
+        "constant": "uppercase"
     }
 }
 
