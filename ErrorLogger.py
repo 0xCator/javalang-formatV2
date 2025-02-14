@@ -14,7 +14,7 @@ class ErrorLogger(JavaParserVisitor):
         if "class" in self.naming_convention_configs:
             class_config = self.naming_convention_configs["class"]
 
-        error = self.check_convention(class_name, class_config, class_config)
+        error = self.check_convention(class_name, class_config)
         if error:
             self.error_log.append("Class name " + error)
         
@@ -26,7 +26,7 @@ class ErrorLogger(JavaParserVisitor):
         if "method" in self.naming_convention_configs:
             method_config = self.naming_convention_configs["method"]
 
-        error = self.check_convention(method_name, method_config, method_config)
+        error = self.check_convention(method_name, method_config)
         if error:
             self.error_log.append("Method name " + error)
         
@@ -45,13 +45,13 @@ class ErrorLogger(JavaParserVisitor):
             constant_config = self.naming_convention_configs["constant"]
         
         for declarator in declarators.variableDeclarator():
-            variable_name = declarator.variableDeclaratorId().getText()
+            field_name = declarator.variableDeclaratorId().getText()
             error = None
             
             if is_static and is_final:
-                error = self.check_convention(variable_name, constant_config, constant_config)
+                error = self.check_convention(field_name, constant_config)
             else:
-                error = self.check_convention(variable_name, variable_config, variable_config)
+                error = self.check_convention(field_name, variable_config)
 
             if error:
                 self.error_log.append("Field name " + error)
@@ -66,7 +66,7 @@ class ErrorLogger(JavaParserVisitor):
 
         for declarator in declarators.variableDeclarator():
             variable_name = declarator.variableDeclaratorId().getText()
-            error = self.check_convention(variable_name, variable_config, variable_config)
+            error = self.check_convention(variable_name, variable_config)
             if error:
                 self.error_log.append("Local variable name " + error)
         
@@ -78,21 +78,21 @@ class ErrorLogger(JavaParserVisitor):
         if "parameter" in self.naming_convention_configs:
             parameter_config = self.naming_convention_configs["parameter"]
 
-        error = self.check_convention(parameter_name, parameter_config, parameter_config)
+        error = self.check_convention(parameter_name, parameter_config)
         if error:
             self.error_log.append("Parameter name " + error)
         
         return self.visitChildren(ctx)
 
     @staticmethod
-    def check_convention(name, convention, regex=None) -> bool:
+    def check_convention(name, convention) -> bool:
         patterns = {
             StandardNamingConventions.PASCAL_CASE.value: r"[A-Z][a-zA-Z0-9]*",
             StandardNamingConventions.CAMEL_CASE.value: r"[a-z][a-zA-Z0-9]*",
             StandardNamingConventions.UPPER_CASE.value: r"[A-Z][A-Z0-9_]*"
         }
 
-        pattern = patterns.get(convention, regex)
+        pattern = patterns.get(convention, convention)
 
         if not bool(re.fullmatch(pattern, name)):
             return f"'{name}' does not match the naming convention '{convention}'"
