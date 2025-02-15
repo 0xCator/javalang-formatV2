@@ -30,3 +30,4 @@ errors = errorvisitor.find_errors(tree)
 if errors:
     for error in errors:
         print(error)
+print(formatter.get_formatted_code(tree))

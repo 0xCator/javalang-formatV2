@@ -28,9 +28,13 @@ class ConfigClass:
         try:
             with open(self.config_path) as f:
                 config_json = json.load(f)
-        except Exception:
-            print("Error reading config file. Using default config.")
-            return
+        except json.JSONDecodeError:
+            print(f"Error: Invalid JSON format in '{self.config_path}'.")
+            exit(1)
+        except Exception as e:
+            print(f"Error reading config file: {e}.")
+            exit(1)
+
         
         self.indent_size = config_json.get('indent_size', self.indent_size)
         self.brace_style = config_json.get('brace_style', self.brace_style)

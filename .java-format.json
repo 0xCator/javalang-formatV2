@@ -1,6 +1,6 @@
 {
-    "indent_size": 3,
-    "brace_style": "attach",  
+    "indent_size": 4,
+    "brace_style": "break",  
     "space_around_operators": true,
     "max_line_length": 100,
     "class_modifier_order": ["public", "abstract", "final"],
