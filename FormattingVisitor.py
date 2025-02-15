@@ -178,6 +178,25 @@ class FormattingVisitor(JavaParserVisitor):
             for statement in ctx.blockStatement():
                 if statement.start:
                     self.rewriter.insertBeforeToken(statement.start, "\n" + self._get_indent())
+        self.indent_level -= 1
+        return self.visitChildren(ctx)
 
-        open_brace = ctx.LBRACE().getSymbol()
-        close_brace = ctx.RBRACE().getSymbol()
+    def _remove_whitespace(self, pos):
+        tokens = self.rewriter.getTokenStream()
+        if 0 <= pos < len(tokens.tokens):
+            token = tokens.get(pos)
+            if token.text.isspace():
+                self.rewriter.deleteToken(token)
+
+    def _sort_modifiers(self, modifiers, order):
+        return sorted(modifiers, key=lambda x: order.index(x) if x in order else len(order))
+
+    def _get_indent(self):
+        return " " * (self.indent_level * self.config.get("indent_size", 4))
+
+    def get_formatted_code(self, tree):
+        self.visit(tree)
+        return self.rewriter.getDefaultText()
+
+    def get_all_needed(self):
+        return self.allNeeded
