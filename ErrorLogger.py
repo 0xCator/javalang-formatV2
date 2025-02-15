@@ -1,18 +1,18 @@
 from JavaParser import JavaParser
 from JavaParserVisitor import JavaParserVisitor
 from StandardNamingConventions import StandardNamingConventions
+from ConfigClass import ConfigClass
 import re
 
 class ErrorLogger(JavaParserVisitor):
-    def __init__(self, naming_convention_configs):
-        self.naming_convention_configs = naming_convention_configs
+    def __init__(self, configs: ConfigClass):
+        self.configs = configs
         self.error_log = []
 
     def visitClassDeclaration(self, ctx: JavaParser.ClassDeclarationContext):
         class_name = ctx.identifier().getText()
         
-        if "class" in self.naming_convention_configs:
-            class_config = self.naming_convention_configs["class"]
+        class_config = self.configs.naming_conventions["class"]
 
         error = self.check_convention(class_name, class_config)
         if error:
@@ -23,8 +23,7 @@ class ErrorLogger(JavaParserVisitor):
     def visitMethodDeclaration(self, ctx: JavaParser.MethodDeclarationContext):
         method_name = ctx.identifier().getText()
         
-        if "method" in self.naming_convention_configs:
-            method_config = self.naming_convention_configs["method"]
+        method_config = self.configs.naming_conventions["method"]
 
         error = self.check_convention(method_name, method_config)
         if error:
@@ -38,11 +37,8 @@ class ErrorLogger(JavaParserVisitor):
         is_static = "static" in modifiers
         is_final = "final" in modifiers
 
-        if "variable" in self.naming_convention_configs:
-            variable_config = self.naming_convention_configs["variable"]
-
-        if "constant" in self.naming_convention_configs:
-            constant_config = self.naming_convention_configs["constant"]
+        variable_config = self.configs.naming_conventions["variable"]
+        constant_config = self.configs.naming_conventions["constant"]
         
         for declarator in declarators.variableDeclarator():
             field_name = declarator.variableDeclaratorId().getText()
@@ -61,8 +57,7 @@ class ErrorLogger(JavaParserVisitor):
     def visitLocalVariableDeclaration(self, ctx: JavaParser.LocalVariableDeclarationContext):
         declarators = ctx.variableDeclarators()
 
-        if "variable" in self.naming_convention_configs:
-            variable_config = self.naming_convention_configs["variable"]
+        variable_config = self.configs.naming_conventions["variable"]
 
         for declarator in declarators.variableDeclarator():
             variable_name = declarator.variableDeclaratorId().getText()
@@ -75,8 +70,7 @@ class ErrorLogger(JavaParserVisitor):
     def visitFormalParameter(self, ctx: JavaParser.FormalParameterContext):
         parameter_name = ctx.variableDeclaratorId().getText()
         
-        if "parameter" in self.naming_convention_configs:
-            parameter_config = self.naming_convention_configs["parameter"]
+        parameter_config = self.configs.naming_conventions["parameter"]
 
         error = self.check_convention(parameter_name, parameter_config)
         if error:

@@ -3,14 +3,11 @@ from JavaLexer import JavaLexer
 from JavaParser import JavaParser
 from FormattingVisitor import FormattingVisitor
 from ErrorLogger import ErrorLogger
-import json
+from ConfigClass import ConfigClass
 
 def load_config(config_path):
-    try:
-        f = open(config_path, "r")
-        return json.load(f)
-    except Exception:
-        return {}  # Default empty config
+    config = ConfigClass(config_path)
+    return config
 
 def parse_java_code(file_path):
     with open(file_path, "r") as file:
@@ -24,13 +21,11 @@ def parse_java_code(file_path):
     return tree, tokens
 
 tree, tokens = parse_java_code("test.java")
-config = load_config(".java-format.json")
+configs = load_config(".java-format.json")
 
-formatter = FormattingVisitor(tokens, config)
+formatter = FormattingVisitor(tokens, configs)
 
-naming_convention_configs = config.get("naming_conventions", {})
-
-errorvisitor = ErrorLogger(naming_convention_configs)
+errorvisitor = ErrorLogger(configs)
 errors = errorvisitor.find_errors(tree)
 if errors:
     for error in errors:
