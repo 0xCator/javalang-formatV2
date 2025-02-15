@@ -1,32 +1,16 @@
 from JavaParser import JavaParser
 from JavaParserVisitor import JavaParserVisitor
 from antlr4.TokenStreamRewriter import TokenStreamRewriter
-
-class NameConventionHandler:
-    @staticmethod
-    def to_pascal_case(name):
-        return ''.join(word.capitalize() for word in name.split('_'))
-
-    @staticmethod
-    def to_camel_case(name):
-        words = name.split('_')
-        return words[0].lower() + ''.join(word.capitalize() for word in words[1:])
+from NameConventionHandler import NameConventionHandler
 
 class FormattingVisitor(JavaParserVisitor):
-    """
-    Visitor for formatting Java code.
-    Args:
-        tokens (TokenStream): Token stream from the lexer/parser.
-        config (dict): Configuration settings for formatting.
-    """
     def __init__(self, tokens, config):
         self.rewriter = TokenStreamRewriter(tokens)
         self.config = config
         self.indent_level = 0
         self.allNeeded = []
-        self.field_replacements = {}
         self.parameter_replacements = {}
-        self.instance_replacements = {}
+        self.local_variable_replacements = {}
 
     def visitClassDeclaration(self, ctx: JavaParser.ClassDeclarationContext):
         if ctx.identifier() is None:
@@ -86,7 +70,7 @@ class FormattingVisitor(JavaParserVisitor):
         self.rewriter.replaceRangeTokens(grandparent.start, ctx.identifier().stop, "\n" + self._get_indent() + method_signature)
 
         method_body = ctx.methodBody()
-        if method_body and method_body.block():
+        if (method_body and method_body.block()):
             block = method_body.block()
             open_brace = block.LBRACE().symbol
             close_brace = block.RBRACE().symbol
@@ -119,8 +103,7 @@ class FormattingVisitor(JavaParserVisitor):
                 if variable.variableDeclaratorId():
                     var_name = variable.variableDeclaratorId().getText()
                     camel_case = NameConventionHandler.to_camel_case(var_name)
-                    self.allNeeded.append(camel_case)
-                    self.field_replacements[var_name] = camel_case
+                    self.local_variable_replacements[var_name] = camel_case
                     self.rewriter.replaceRangeTokens(variable.variableDeclaratorId().start, variable.variableDeclaratorId().stop, camel_case)
 
         return self.visitChildren(ctx)
@@ -134,17 +117,24 @@ class FormattingVisitor(JavaParserVisitor):
 
         return self.visitChildren(ctx)
 
-    
+    def visitLocalVariableDeclaration(self, ctx: JavaParser.LocalVariableDeclarationContext):
+        if ctx.variableDeclarators():
+            for variable in ctx.variableDeclarators().variableDeclarator():
+                if variable.variableDeclaratorId():
+                    var_name = variable.variableDeclaratorId().getText()
+                    camel_case = NameConventionHandler.to_camel_case(var_name)
+                    self.local_variable_replacements[var_name] = camel_case
+                    self.rewriter.replaceRangeTokens(variable.variableDeclaratorId().start, variable.variableDeclaratorId().stop, camel_case)
+
+        return self.visitChildren(ctx)
+
     def visitIdentifier(self, ctx: JavaParser.IdentifierContext):
         identifier_name = ctx.getText()
-        if identifier_name in self.field_replacements:
-            new_name = self.field_replacements[identifier_name]
-            self.rewriter.replaceSingleToken(ctx.start, new_name)
-        elif identifier_name in self.parameter_replacements:
+        if identifier_name in self.parameter_replacements:
             new_name = self.parameter_replacements[identifier_name]
             self.rewriter.replaceSingleToken(ctx.start, new_name)
-        elif identifier_name in self.instance_replacements:
-            new_name = self.instance_replacements[identifier_name]
+        elif identifier_name in self.local_variable_replacements:
+            new_name = self.local_variable_replacements[identifier_name]
             self.rewriter.replaceSingleToken(ctx.start, new_name)
         return self.visitChildren(ctx)
 
