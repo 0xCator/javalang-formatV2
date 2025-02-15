@@ -29,7 +29,8 @@ class ConfigClass:
             with open(self.config_path) as f:
                 config_json = json.load(f)
         except Exception:
-            pass
+            print("Error reading config file. Using default config.")
+            return
         
         self.indent_size = config_json.get('indent_size', self.indent_size)
         self.brace_style = config_json.get('brace_style', self.brace_style)
