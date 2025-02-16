@@ -1,9 +1,11 @@
 from antlr4 import *
+from antlr4.TokenStreamRewriter import TokenStreamRewriter
 from JavaLexer import JavaLexer
 from JavaParser import JavaParser
 from FormattingVisitor import FormattingVisitor
 from ErrorLogger import ErrorLogger
 from ConfigClass import ConfigClass
+from NameConventionFormatterVisitor import NameConventionFormatterVisitor
 
 def load_config(config_path):
     config = ConfigClass(config_path)
@@ -23,11 +25,17 @@ def parse_java_code(file_path):
 tree, tokens = parse_java_code("test.java")
 configs = load_config(".java-format.json")
 
-formatter = FormattingVisitor(tokens, configs)
+# Create a single TokenStreamRewriter instance
+rewriter = TokenStreamRewriter(tokens)
 
-errorvisitor = ErrorLogger(configs)
-errors = errorvisitor.find_errors(tree)
-if errors:
-    for error in errors:
-        print(error)
-print(formatter.get_formatted_code(tree))
+# Apply naming convention formatting
+name_formatter = NameConventionFormatterVisitor(rewriter, configs)
+name_formatter.visit(tree)
+# Print the final formatted output
+# print(rewriter.getDefaultText())
+# Apply code formatting
+formatter = FormattingVisitor(rewriter, configs)
+formatter.visit(tree)
+
+# Print the final formatted output
+print(rewriter.getDefaultText())
