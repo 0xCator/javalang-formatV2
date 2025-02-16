@@ -11,24 +11,30 @@ class ErrorLogger(JavaParserVisitor):
 
     def visitClassDeclaration(self, ctx: JavaParser.ClassDeclarationContext):
         class_name = ctx.identifier().getText()
-        
+        print(f"Checking class name: {class_name}")  # Before checking
+        print('hi')
         class_config = self.configs.naming_conventions["class"]
-
         error = self.check_convention(class_name, class_config)
+        print(class_name)
         if error:
             self.error_log.append("Class name " + error)
-        
+
+        print(f"Result for class name '{class_name}': {error or 'OK'}") # After checking
+
         return self.visitChildren(ctx)
 
     def visitMethodDeclaration(self, ctx: JavaParser.MethodDeclarationContext):
         method_name = ctx.identifier().getText()
-        
-        method_config = self.configs.naming_conventions["method"]
+        print(f"Checking method name: {method_name}")  # Before checking
 
+        method_config = self.configs.naming_conventions["method"]
         error = self.check_convention(method_name, method_config)
+
         if error:
             self.error_log.append("Method name " + error)
-        
+
+        print(f"Result for method name '{method_name}': {error or 'OK'}") # After checking
+
         return self.visitChildren(ctx)
 
     def visitFieldDeclaration(self, ctx: JavaParser.FieldDeclarationContext):
@@ -39,11 +45,13 @@ class ErrorLogger(JavaParserVisitor):
 
         variable_config = self.configs.naming_conventions["variable"]
         constant_config = self.configs.naming_conventions["constant"]
-        
+
         for declarator in declarators.variableDeclarator():
             field_name = declarator.variableDeclaratorId().getText()
+            print(f"Checking field name: {field_name}")  # Before checking
+
             error = None
-            
+
             if is_static and is_final:
                 error = self.check_convention(field_name, constant_config)
             else:
@@ -51,9 +59,11 @@ class ErrorLogger(JavaParserVisitor):
 
             if error:
                 self.error_log.append("Field name " + error)
-        
+
+            print(f"Result for field name '{field_name}': {error or 'OK'}") # After checking
+
         return self.visitChildren(ctx)
-    
+
     def visitLocalVariableDeclaration(self, ctx: JavaParser.LocalVariableDeclarationContext):
         declarators = ctx.variableDeclarators()
 
@@ -61,21 +71,28 @@ class ErrorLogger(JavaParserVisitor):
 
         for declarator in declarators.variableDeclarator():
             variable_name = declarator.variableDeclaratorId().getText()
+            print(f"Checking local variable name: {variable_name}")  # Before checking
+
             error = self.check_convention(variable_name, variable_config)
             if error:
                 self.error_log.append("Local variable name " + error)
-        
+
+            print(f"Result for local variable name '{variable_name}': {error or 'OK'}") # After checking
+
         return self.visitChildren(ctx)
 
     def visitFormalParameter(self, ctx: JavaParser.FormalParameterContext):
         parameter_name = ctx.variableDeclaratorId().getText()
-        
+        print(f"Checking parameter name: {parameter_name}")  # Before checking
+
         parameter_config = self.configs.naming_conventions["parameter"]
 
         error = self.check_convention(parameter_name, parameter_config)
         if error:
             self.error_log.append("Parameter name " + error)
-        
+
+        print(f"Result for parameter name '{parameter_name}': {error or 'OK'}") # After checking
+
         return self.visitChildren(ctx)
 
     @staticmethod
@@ -90,7 +107,7 @@ class ErrorLogger(JavaParserVisitor):
 
         if not bool(re.fullmatch(pattern, name)):
             return f"'{name}' does not match the naming convention '{convention}'"
-        
+
         return None
 
     def find_errors(self, tree) -> list:

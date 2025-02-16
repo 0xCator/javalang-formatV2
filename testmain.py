@@ -32,10 +32,21 @@ rewriter = TokenStreamRewriter(tokens)
 name_formatter = NameConventionFormatterVisitor(rewriter, configs)
 name_formatter.visit(tree)
 # Print the final formatted output
-# print(rewriter.getDefaultText())
+print(rewriter.getDefaultText())
 # Apply code formatting
 formatter = FormattingVisitor(rewriter, configs)
 formatter.visit(tree)
 
 # Print the final formatted output
-print(rewriter.getDefaultText())
+# print(rewriter.getDefaultText())
+
+""" error_logger = ErrorLogger(configs)
+errors = error_logger.find_errors(tree)
+
+if errors:
+    print("Naming Convention Errors:")
+    for error in errors:
+        print(error)
+else:
+  print("No naming convention errors found.")
+ """
