@@ -71,3 +71,10 @@ public class hello_World
     }
 }
 // test_that()
+
+class another_class {
+    public static void main(String[] args) {
+        hello_world instance = new hello_world();
+        System.out.println(instance.test_that_2(5));
+    }
+}

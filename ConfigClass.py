@@ -1,12 +1,8 @@
 import json
 
 class ConfigClass:
-    def __init__(self, config_path):
-        self.config_path = config_path
-
+    def __init__(self):
         self.default_config()
-
-        self.read_config()
 
     def default_config(self):
         self.indent_size = 4
@@ -16,12 +12,13 @@ class ConfigClass:
         self.class_modifier_order = ['public', 'abstract', 'final']
         self.method_modifier_order = ['public', 'static', 'final']
         self.naming_conventions = {
-            'class': 'pascalcase',
+            'class': '[A-Z][a-zA-Z0-9]*',
             'method': 'camelcase',
-            'variable': 'camelcase',
+            'variable': '[a-z][a-zA-Z0-9]*',
             'parameter': 'camelcase',
             'constant': 'uppercase'
         }
+
 
     def read_config(self):
         config_json = {}
