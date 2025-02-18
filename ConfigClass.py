@@ -23,6 +23,10 @@ class ConfigClass:
             'parameter': 'camelcase',
             'constant': 'uppercase'
         }
+        self.imports = {
+            'order': 'preserve',
+            'merge': False
+        }
 
     def read_config(self):
         config_json = {}
@@ -45,6 +49,7 @@ class ConfigClass:
         self.class_modifier_order = config_json.get('class_modifier_order', self.class_modifier_order)
         self.method_modifier_order = config_json.get('method_modifier_order', self.method_modifier_order)
         self.naming_conventions = config_json.get('naming_conventions', self.naming_conventions)
+        self.imports = config_json.get('imports', self.imports)
 
     # Kept for future use
     def save_config(self):

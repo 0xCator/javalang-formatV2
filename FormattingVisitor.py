@@ -9,7 +9,41 @@ class FormattingVisitor(JavaParserVisitor):
         self.rewriter : TokenStreamRewriter = TokenStreamRewriter(tokens)
         self.config = config
         self.indent_level: int = 0
+        self.imports = {
+            'items': [],
+            'start_index': -1,
+            'end_index': -1
+        }
     
+    def visitImportDeclaration(self, ctx: JavaParser.ImportDeclarationContext):
+        if self.config.imports["merge"] == True:
+            if self.rewriter.getTokenStream().get(ctx.stop.tokenIndex+1).type in [JavaParser.WS]:
+                self.rewriter.replaceIndex(ctx.stop.tokenIndex+1, "\n")
+            else:
+                self.rewriter.insertBeforeIndex(ctx.stop.tokenIndex+1, "\n")
+
+        if self.config.imports['order'] == "sort":
+            if self.imports['start_index'] == -1:
+                self.imports['start_index'] = ctx.start.tokenIndex
+            self.imports['end_index'] = ctx.stop.tokenIndex
+            self.imports['items'].append(self._get_import_text(ctx.start.tokenIndex, ctx.stop.tokenIndex))
+
+        return self.visitChildren(ctx)
+    
+    def _get_import_text(self, start, stop):
+        text = []
+        for i in range(start, stop+1):
+            text.append(self.rewriter.getTokenStream().get(i).text)
+        return text[0] + " " + "".join(text[1:]).strip()
+    
+    def _order_imports(self):
+        if self.imports['items']:
+            self.rewriter.replaceRange(self.imports['start_index'], self.imports['end_index'], "\n".join(sorted(self.imports['items'])))
+        
+        # Used to help with the lack of a newline in the last import
+        if self.config.imports['merge'] == True:
+            self.rewriter.insertBeforeIndex(self.imports['end_index']+1, "\n")
+
     def visitClassDeclaration(self, ctx: JavaParser.ClassDeclarationContext):
         class_name = ctx.identifier().getText()
         modifiers = []
@@ -149,5 +183,15 @@ class FormattingVisitor(JavaParserVisitor):
                 return "\t" * self.indent_level
     
     def get_formatted_code(self, tree):
+        self.imports = {
+            'items': [],
+            'start_index': -1,
+            'end_index': -1
+        }
+
         self.visit(tree)
+
+        if self.config.imports['order'] == "sort":
+            self._order_imports()
+
         return self.rewriter.getDefaultText()

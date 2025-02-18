@@ -12,6 +12,9 @@
         "variable": "[a-z][a-zA-Z0-9]*",
         "parameter": "camelcase",
         "constant": "uppercase"
+    },
+    "imports": {
+        "order": "sort",
+        "merge": true
     }
 }
-
