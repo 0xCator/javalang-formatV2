@@ -142,7 +142,11 @@ class FormattingVisitor(JavaParserVisitor):
         return sorted(modifiers, key=lambda x: order.index(x) if x in order else len(order))
     
     def _get_indent(self):
-        return " " * (self.indent_level * self.config.indent_size)
+        match self.config.indentation_type:
+            case "spaces":
+                return " " * (self.indent_level * self.config.indent_size)
+            case "tabs":
+                return "\t" * self.indent_level
     
     def get_formatted_code(self, tree):
         self.visit(tree)
