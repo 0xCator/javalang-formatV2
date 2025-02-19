@@ -2,6 +2,7 @@
     "indent_size": 4,
     "brace_style": "break",  
     "space_around_operators": true,
+    "indentation_type": "spaces",
     "max_line_length": 100,
     "class_modifier_order": ["public", "abstract", "final"],
     "method_modifier_order": ["public", "static", "final"],
@@ -11,6 +12,9 @@
         "variable": "[a-z][a-zA-Z0-9]*",
         "parameter": "camelcase",
         "constant": "uppercase"
+    },
+    "imports": {
+        "order": "sort",
+        "merge": true
     }
 }
-
