@@ -8,6 +8,7 @@ class ConfigClass:
         self.indent_size = 4
         self.brace_style = 'break'
         self.space_around_operator = True
+        self.indentation_type = 'spaces'
         self.max_line_length = 100
         self.class_modifier_order = ['public', 'abstract', 'final']
         self.method_modifier_order = ['public', 'static', 'final']
@@ -17,6 +18,10 @@ class ConfigClass:
             'variable': '[a-z][a-zA-Z0-9]*',
             'parameter': 'camelcase',
             'constant': 'uppercase'
+        }
+        self.imports = {
+            'order': 'preserve',
+            'merge': False
         }
 
 
@@ -36,10 +41,12 @@ class ConfigClass:
         self.indent_size = config_json.get('indent_size', self.indent_size)
         self.brace_style = config_json.get('brace_style', self.brace_style)
         self.space_around_operator = config_json.get('space_around_operator', self.space_around_operator)
+        self.indentation_type = config_json.get('indentation_type', self.indentation_type)
         self.max_line_length = config_json.get('max_line_length', self.max_line_length)
         self.class_modifier_order = config_json.get('class_modifier_order', self.class_modifier_order)
         self.method_modifier_order = config_json.get('method_modifier_order', self.method_modifier_order)
         self.naming_conventions = config_json.get('naming_conventions', self.naming_conventions)
+        self.imports = config_json.get('imports', self.imports)
 
     # Kept for future use
     def save_config(self):
