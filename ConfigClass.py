@@ -24,6 +24,7 @@ class ConfigClass:
             'merge': False
         }
 
+
     def read_config(self):
         config_json = {}
         try:

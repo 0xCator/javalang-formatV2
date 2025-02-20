@@ -45,6 +45,7 @@ class FormattingVisitor(JavaParserVisitor):
         if self.config.imports['merge'] == True:
             self.rewriter.insertBeforeIndex(self.imports['end_index']+1, "\n")
 
+
     def visitClassDeclaration(self, ctx: JavaParser.ClassDeclarationContext):
         class_name = ctx.identifier().getText()
         modifiers = []

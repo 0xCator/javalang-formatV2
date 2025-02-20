@@ -346,7 +346,9 @@ class RegexRewriter:
             
         return self._process_components(input_string, inner_components, remaining_insertions)
     
+
     def _process_components(self, input_string: str, components: List[Component], remaining_insertions: int) -> Tuple[str, int]:
+
         result = list(input_string)
         input_pos = 0
         result_pos = 0
@@ -370,6 +372,7 @@ class RegexRewriter:
                     else:
                         result.append(c)
 
+
                 result_pos += len(alt_result)
                 input_pos += min(len(alt_result), len(segment))
                 remaining_insertions -= insertions_used
@@ -378,11 +381,13 @@ class RegexRewriter:
                 segment = input_string[input_pos:] if input_pos < len(input_string) else ""
                 group_result, insertions_used = self._handle_group(component, segment, remaining_insertions)
 
+
                 for i, c in enumerate(group_result):
                     if result_pos + i < len(result):
                         result[result_pos + i] = c
                     else:
                         result.append(c)
+
 
                 result_pos += len(group_result)
                 input_pos += min(len(group_result), len(segment))
@@ -408,6 +413,7 @@ class RegexRewriter:
                             transformed = current_char
 
                         if transformed is not None:
+
                             if result_pos < len(result):
                                 result[result_pos] = transformed
                             else:
@@ -437,6 +443,7 @@ class RegexRewriter:
                     else:
                         raise ImpossiblePatternError("Input too short and no insertions left")
 
+
                 max_additional = component.max_repeat - component.min_repeat
                 additional_processed = 0
 
@@ -454,6 +461,7 @@ class RegexRewriter:
                     else:
                         transformed = current_char
 
+
                     if transformed is not None:
                         if result_pos < len(result):
                             result[result_pos] = transformed
@@ -465,6 +473,7 @@ class RegexRewriter:
                         additional_processed += 1
                     else:
                         break
+
 
             component_idx += 1
 
