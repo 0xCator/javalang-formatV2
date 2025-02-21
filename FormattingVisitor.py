@@ -190,11 +190,15 @@ class FormattingVisitor(JavaParserVisitor):
         """Decorator to automatically increase and decrease indentation."""
         @wraps(method)
         def wrapper(self, ctx):
-            self.indent_level += 1
+            ignore_switch_case = method.__name__ == "visitSwitchBlockStatementGroup" and self.config.indents['switch_case_labels'] != "indent"
+
+            if not ignore_switch_case:
+                self.indent_level += 1
             try:
                 return method(self, ctx)
             finally:
-                self.indent_level -= 1 
+                if not ignore_switch_case:
+                    self.indent_level -= 1 
         return wrapper
 
 
@@ -250,9 +254,9 @@ class FormattingVisitor(JavaParserVisitor):
         return sorted(modifiers, key=lambda x: order.index(x) if x in order else len(order))
     
     def _get_indent(self):
-        match self.config.indentation_type:
+        match self.config.indents['type']:
             case "spaces":
-                return " " * (self.indent_level * self.config.indent_size)
+                return " " * (self.indent_level * self.config.indents['size'])
             # may it appear as 8 spaces but it is actually configurable
             # in text editors so it should be as a size of indent_size
             case "tabs":

@@ -1,8 +1,6 @@
 {
-    "indent_size": 4,
     "brace_style": "break",  
     "space_around_operators": true,
-    "indentation_type": "tabs",
     "max_line_length": 100,
     "class_modifier_order": ["public", "abstract", "final"],
     "method_modifier_order": ["public", "static", "final"],
@@ -16,5 +14,10 @@
     "imports": {
         "order": "sort",
         "merge": true
+    },
+    "indents": {
+        "size": 4,
+        "type": "tabs",
+        "switch_case_labels": "indent"
     }
 }
