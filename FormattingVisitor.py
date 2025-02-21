@@ -1,3 +1,4 @@
+from typing import Optional
 from JavaParser import JavaParser
 from JavaParserVisitor import JavaParserVisitor
 from antlr4.TokenStreamRewriter import TokenStreamRewriter
@@ -70,9 +71,9 @@ class FormattingVisitor(JavaParserVisitor):
             if self.config.brace_style == "attach":
                 self.rewriter.replaceSingleToken(open_brace, " {")
             else:
-                self.rewriter.replaceSingleToken(open_brace, "\n" + self._get_indent() + "{")
+                self.rewriter.replaceSingleToken(open_brace, f"\n{self._get_indent()}"+"{")
 
-            self.rewriter.replaceSingleToken(close_brace, "\n" + self._get_indent() + "}")
+            self.rewriter.replaceSingleToken(close_brace, f"\n{self._get_indent()}" + "}")
 
             self.indent_level += 1
 
@@ -84,7 +85,7 @@ class FormattingVisitor(JavaParserVisitor):
         method_name = ctx.identifier().getText()
         modifiers = []
         parent = ctx.parentCtx  
-        grandparent: JavaParser.StatementContext = None
+        grandparent: Optional[JavaParser.StatementContext] = None
         if isinstance(parent, JavaParser.MemberDeclarationContext):  
             grandparent = parent.parentCtx  
             if isinstance(grandparent, JavaParser.ClassBodyDeclarationContext):
@@ -94,10 +95,8 @@ class FormattingVisitor(JavaParserVisitor):
 
         method_signature = f"{' '.join(modifiers)} {return_type} {method_name}".strip()
 
-        self.rewriter.replaceRangeTokens(grandparent.start, ctx.identifier().stop, "\n" + self._get_indent() + method_signature)
-
-
-
+        if grandparent: 
+            self.rewriter.replaceRangeTokens(grandparent.start, ctx.identifier().stop, f"\n{self._get_indent()}{method_signature}")
         return self.visitChildren(ctx)
     
     def visitStatement(self, ctx: JavaParser.StatementContext):
@@ -107,11 +106,12 @@ class FormattingVisitor(JavaParserVisitor):
             if self.config.brace_style == "attach":
                 self.rewriter.replaceSingleToken(open_brace, " {")
             else:
-                self.rewriter.replaceSingleToken(open_brace, "\n" + self._get_indent() + "{")
-            self.rewriter.insertBeforeToken(close_paren, "\n" + self._get_indent())
+                self.rewriter.replaceSingleToken(open_brace, f"\n{self._get_indent()}" + "{")
+            self.rewriter.insertBeforeToken(close_paren, f"\n{self._get_indent()}")
         return self.visitChildren(ctx)
 
 
+    @staticmethod
     def handle_indentation(method):
         """Decorator to automatically increase and decrease indentation."""
         @wraps(method)
@@ -127,12 +127,12 @@ class FormattingVisitor(JavaParserVisitor):
     @handle_indentation
     def visitBlockStatement(self, ctx: JavaParser.BlockStatementContext):
         statement_start = ctx.start
-        self.rewriter.insertBeforeToken(statement_start, "\n" + self._get_indent())
+        self.rewriter.insertBeforeToken(statement_start, f"\n{self._get_indent()}")
         return self.visitChildren(ctx)
 
     def visitSwitchLabel(self, ctx: JavaParser.SwitchLabelContext):
         lable_start = ctx.start
-        self.rewriter.insertBeforeToken(lable_start, "\n" + self._get_indent())
+        self.rewriter.insertBeforeToken(lable_start, f"\n{self._get_indent()}")
         return super().visitSwitchLabel(ctx)
 
     @handle_indentation
@@ -161,9 +161,9 @@ class FormattingVisitor(JavaParserVisitor):
             self._remove_whitespace(open_brace.tokenIndex - 1) 
             if in_switch:
                 self.rewriter.replaceSingleToken(open_brace, "{")
-            self.rewriter.replaceSingleToken(open_brace, "\n" + self._get_indent() + "{")
+            self.rewriter.replaceSingleToken(open_brace, f"\n{self._get_indent()}" + "{")
         
-        self.rewriter.replaceSingleToken(close_brace, "\n" + self._get_indent() + "}")
+        self.rewriter.replaceSingleToken(close_brace, f"\n{self._get_indent()}" + "}")
         return self.visitChildren(ctx)
 
     
