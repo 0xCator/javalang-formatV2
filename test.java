@@ -5,4 +5,6 @@ public class HelloWorld{
     public void test(){System.out.println("Hello World");try{int x=1/0;}catch(Exception e){System.out.println(e.getMessage());}}
     public void test2() { if (true) {System.out.println("Hello World"); } else { System.out.println("Hello World"); } switch(a){case 1:{System.out.println("One");break;}default:System.out.println("Other");}}
     public void nestedLoops(){for(int i=0;i<5;i++){for(int j=0;j<5;j++){System.out.println(i*j);}}}
+    public void longLine() { System.out.println("This is a really long line that definitely exceeds 100 characters for testing purposes in your Java formatter tool."); }
 }
+

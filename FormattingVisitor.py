@@ -15,6 +15,80 @@ class FormattingVisitor(JavaParserVisitor):
             'start_index': -1,
             'end_index': -1
         }
+
+    def _apply_max_line_length_line(self, line: str) -> str:
+        if len(line) <= self.config.max_line_length:
+            return line
+
+        indent = ''
+        for char in line:
+            if char == " " or char == "\t":
+                indent += char
+            else:
+                break
+
+        if '"' in line or "'" in line:
+            in_string = False
+            string_type = None
+            string_positions = []
+            string_start = -1
+
+            for i, char in enumerate(line):
+                if not in_string and (char == '"' or char == "'"):
+                    in_string = True
+                    string_type = char
+                    string_start = i
+                elif in_string and char == string_type and line[i-1] != '\\':
+                    in_string = False
+                    string_positions.append((string_start, i))
+
+            if in_string:
+                string_positions.append((string_start, len(line) - 1))
+
+            if string_positions:
+                start, end = string_positions[0]
+                before_string = line[:start]
+                string_literal = line[start:end+1]
+                after_string = line[end+1:]
+
+                if len(string_literal) > self.config.max_line_length:
+                    string_content = string_literal[1:-1]  # Remove quotes
+                    split_strings = []
+                    current_part = ''
+
+                    for word in string_content.split(" "):
+                        if len(before_string) + len(current_part.strip()) + len(word) + 3 > self.config.max_line_length:  # 3 accounts for '" + "'
+                            split_strings.append(current_part)
+                            current_part = word
+                        else:
+                            if current_part:
+                                current_part += ' '
+                            current_part += word
+
+                    if current_part:
+                        split_strings.append(current_part)
+
+                    formatted_string = f'{string_type}\n {indent}    + {string_type}'.join(split_strings)
+                    new_line = f"{before_string}{string_type}{formatted_string}{string_type}{after_string}"
+                    return new_line
+
+        line = line[len(indent):]
+        words = line.split(" ")
+        new_line = ''
+        current_line = ''
+        for word in words:
+            if len(current_line) + len(word) > self.config.max_line_length:
+                new_line += current_line + "\n" + indent
+                current_line = word + " "
+            else:
+                current_line += word + " "
+        new_line += current_line.strip()
+        return indent + new_line
+
+    def _apply_max_line_length(self, text: str) -> str:
+        if self.config.max_line_length == -1:
+            return text
+        return "\n".join([self._apply_max_line_length_line(line) for line in text.split("\n")])
     
     def visitImportDeclaration(self, ctx: JavaParser.ImportDeclarationContext):
         if self.config.imports["merge"] == True:
@@ -179,6 +253,8 @@ class FormattingVisitor(JavaParserVisitor):
         match self.config.indentation_type:
             case "spaces":
                 return " " * (self.indent_level * self.config.indent_size)
+            # may it appear as 8 spaces but it is actually configurable
+            # in text editors so it should be as a size of indent_size
             case "tabs":
                 return "\t" * self.indent_level
     
@@ -194,4 +270,6 @@ class FormattingVisitor(JavaParserVisitor):
         if self.config.imports['order'] == "sort":
             self._order_imports()
 
-        return self.rewriter.getDefaultText()
+        formatted_text: str = self.rewriter.getDefaultText()
+        return self._apply_max_line_length(formatted_text)
+
