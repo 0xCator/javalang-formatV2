@@ -3,18 +3,30 @@ from JavaParserVisitor import JavaParserVisitor
 from JavaParser import JavaParser
 from PatternTransformer import RegexAnalyzer, RegexRewriter
 import re
+from ConfigClass import ConfigClass
+from StandardNamingConventions import StandardNamingConventions
 
 class NameConventionFormatterVisitor(JavaParserVisitor):
-    def __init__(self, rewriter, config):
-        self.rewriter = rewriter
+    def __init__(self, tokens, config : ConfigClass):
+        self.rewriter = TokenStreamRewriter(tokens)
         self.config = config
         self.function_calls = []
         self.regex_analyzer = RegexAnalyzer()
         self.regex_rewriter = RegexRewriter()
+        self.imports = {
+            'items': [],
+            'start_index': -1,
+            'end_index': -1
+        }
+        self.token_stream = tokens
 
+    def visitImportDeclaration(self, ctx: JavaParser.ImportDeclarationContext):
+            # Skip processing import statements
+            return None  
     def visitClassDeclaration(self, ctx: JavaParser.ClassDeclarationContext):
         class_name = ctx.identifier().getText()
-        class_pattern = self.config.naming_conventions['class']
+        class_config = self.config.naming_conventions['class']
+        class_pattern = self.check_convention(class_config)
         parsed_components = self.regex_analyzer.analyze(class_pattern)
 
         if not self._matches(class_name, parsed_components):
@@ -26,7 +38,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
 
     def visitCreator(self, ctx: JavaParser.CreatorContext):
         class_name = ctx.createdName().getText()
-        class_pattern = self.config.naming_conventions['class']
+        class_config = self.config.naming_conventions['class']
+        class_pattern = self.check_convention(class_config)
         parsed_components = self.regex_analyzer.analyze(class_pattern)
 
         if not self._matches(class_name, parsed_components):
@@ -38,7 +51,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
 
     def visitQualifiedName(self, ctx: JavaParser.QualifiedNameContext):
         identifiers = ctx.identifier()
-        class_pattern = self.config.naming_conventions['class']
+        class_config = self.config.naming_conventions['class']
+        class_pattern = self.check_convention(class_config)
         parsed_components = self.regex_analyzer.analyze(class_pattern)
 
         for identifier in identifiers:
@@ -54,7 +68,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
     def visitTypeType(self, ctx: JavaParser.TypeTypeContext):
         if ctx.classOrInterfaceType():
             type_name = ctx.classOrInterfaceType().getText()
-            class_pattern = self.config.naming_conventions['class']
+            class_config = self.config.naming_conventions['class']
+            class_pattern = self.check_convention(class_config)
             parsed_components = self.regex_analyzer.analyze(class_pattern)
 
             if not self._matches(type_name, parsed_components):
@@ -67,7 +82,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
     def visitExpression(self, ctx: JavaParser.ExpressionContext):
         if ctx.primary() and ctx.primary().identifier():
             static_call = ctx.primary().identifier().getText()
-            class_pattern = self.config.naming_conventions['class']
+            class_config = self.config.naming_conventions['class']
+            class_pattern = self.check_convention(class_config)
             parsed_components = self.regex_analyzer.analyze(class_pattern)
 
             if not self._matches(static_call, parsed_components):
@@ -79,7 +95,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
 
     def visitAnnotation(self, ctx: JavaParser.AnnotationContext):
         annotation_name = ctx.qualifiedName().getText()
-        class_pattern = self.config.naming_conventions['class']
+        class_config = self.config.naming_conventions['class']
+        class_pattern = self.check_convention(class_config)
         parsed_components = self.regex_analyzer.analyze(class_pattern)
 
         if not self._matches(annotation_name, parsed_components):
@@ -91,7 +108,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
 
     def visitMethodDeclaration(self, ctx: JavaParser.MethodDeclarationContext):
         method_name = ctx.identifier().getText()
-        method_pattern = self.config.naming_conventions['method']
+        method_config = self.config.naming_conventions['method']
+        method_pattern = self.check_convention(method_config)
         parsed_components = self.regex_analyzer.analyze(method_pattern)
         self.function_calls.append(f"Declared: {method_name}")
 
@@ -109,8 +127,11 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
         is_static = "static" in modifiers
         is_final = "final" in modifiers
 
-        variable_pattern = self.config.naming_conventions["variable"]
-        constant_pattern = self.config.naming_conventions["constant"]
+
+        variable_config = self.config.naming_conventions['variable']
+        variable_pattern = self.check_convention(variable_config)
+        constant_config = self.config.naming_conventions['constant']
+        constant_pattern = self.check_convention(constant_config)
         variable_components = self.regex_analyzer.analyze(variable_pattern)
         constant_components = self.regex_analyzer.analyze(constant_pattern)
 
@@ -132,7 +153,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
 
     def visitLocalVariableDeclaration(self, ctx: JavaParser.LocalVariableDeclarationContext):
         declarators = ctx.variableDeclarators()
-        variable_pattern = self.config.naming_conventions["variable"]
+        variable_config = self.config.naming_conventions['variable']
+        variable_pattern = self.check_convention(variable_config)
         parsed_components = self.regex_analyzer.analyze(variable_pattern)
 
         for declarator in declarators.variableDeclarator():
@@ -147,7 +169,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
 
     def visitVariableDeclarator(self, ctx: JavaParser.VariableDeclaratorContext):
         variable_name = ctx.variableDeclaratorId().getText()
-        variable_pattern = self.config.naming_conventions["variable"]
+        variable_config = self.config.naming_conventions['variable']
+        variable_pattern = self.check_convention(variable_config)
         parsed_components = self.regex_analyzer.analyze(variable_pattern)
 
         if not self._matches(variable_name, parsed_components):
@@ -159,19 +182,21 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
 
     def visitFormalParameter(self, ctx: JavaParser.FormalParameterContext):
         parameter_name = ctx.variableDeclaratorId().getText()
-        parameter_pattern = self.config.naming_conventions['parameter']
+        parameter_config = self.config.naming_conventions['parameter']
+        parameter_pattern = self.check_convention(parameter_config)
         parsed_components = self.regex_analyzer.analyze(parameter_pattern)
 
         if not self._matches(parameter_name, parsed_components):
             new_parameter_name = self.regex_rewriter.rewrite(parameter_name, parameter_pattern)
             self.rewriter.replaceSingleToken(ctx.variableDeclaratorId().start, new_parameter_name)
-            self.replace_parameter_in_method_body(ctx, parameter_name, new_parameter_name)
+            self.replaceParameterInMethodBody(ctx, parameter_name, new_parameter_name)
 
         return self.visitChildren(ctx)
 
     def visitMethodCall(self, ctx: JavaParser.MethodCallContext):
         method_name = ctx.identifier().getText()
-        method_pattern = self.config.naming_conventions['method']
+        method_config = self.config.naming_conventions['method']
+        method_pattern = self.check_convention(method_config)
         parsed_components = self.regex_analyzer.analyze(method_pattern)
 
         if not self._matches(method_name, parsed_components):
@@ -192,11 +217,11 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
             return False
 
     def replaceUsage(self, old_name, new_name):
-        for token in self.rewriter.getTokenStream().tokens:
+        for token in self.token_stream.tokens:
             if token.text == old_name:
                 self.rewriter.replaceSingleToken(token, new_name)
-
-    def replace_parameter_in_method_body(self, ctx, old_name, new_name):
+    
+    def replaceParameterInMethodBody(self, ctx, old_name, new_name):
         method_body = self.getMethodBody(ctx)
         if method_body:
             for token in self.rewriter.getTokenStream().tokens:
@@ -211,3 +236,32 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
                 return parent.methodBody()
             parent = parent.parentCtx
         return None
+    @staticmethod
+    def check_convention(convention) -> bool:
+        patterns = {
+            StandardNamingConventions.PASCAL_CASE.value: r"[A-Z][a-zA-Z0-9]*",
+            StandardNamingConventions.CAMEL_CASE.value: r"[a-z][a-zA-Z0-9]*",
+            StandardNamingConventions.UPPER_CASE.value: r"[A-Z][A-Z0-9_]*"
+        }
+
+        return patterns.get(convention, convention)
+    def _order_imports(self):
+        if self.imports['items']:
+            self.rewriter.replaceRange(self.imports['start_index'], self.imports['end_index'], "\n".join(sorted(self.imports['items'])))
+        
+        # Used to help with the lack of a newline in the last import
+        if self.config.imports['merge'] == True:
+            self.rewriter.insertBeforeIndex(self.imports['end_index']+1, "\n")
+    def get_formatted_code(self, tree):
+        self.imports = {
+            'items': [],
+            'start_index': -1,
+            'end_index': -1
+        }
+
+        self.visit(tree)
+
+        if self.config.imports['order'] == "sort":
+            self._order_imports()
+
+        return self.rewriter.getDefaultText()

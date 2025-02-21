@@ -1,14 +1,13 @@
-from antlr4.TokenStreamRewriter import TokenStreamRewriter
-from JavaParserVisitor import JavaParserVisitor
 from JavaParser import JavaParser
+from JavaParserVisitor import JavaParserVisitor
+from antlr4.TokenStreamRewriter import TokenStreamRewriter
 from functools import wraps
 from ConfigClass import ConfigClass
 
 class FormattingVisitor(JavaParserVisitor):
-    def __init__(self, rewriter, config: ConfigClass):
-        self.rewriter = rewriter
+    def __init__(self, tokens, config: ConfigClass):
+        self.rewriter : TokenStreamRewriter = TokenStreamRewriter(tokens)
         self.config = config
-
         self.indent_level: int = 0
         self.imports = {
             'items': [],
@@ -45,7 +44,6 @@ class FormattingVisitor(JavaParserVisitor):
         if self.config.imports['merge'] == True:
             self.rewriter.insertBeforeIndex(self.imports['end_index']+1, "\n")
 
-
     def visitClassDeclaration(self, ctx: JavaParser.ClassDeclarationContext):
         class_name = ctx.identifier().getText()
         modifiers = []
@@ -78,6 +76,7 @@ class FormattingVisitor(JavaParserVisitor):
 
             self.indent_level += 1
 
+        
         return self.visitChildren(ctx)
     
     def visitMethodDeclaration(self, ctx: JavaParser.MethodDeclarationContext):
@@ -96,6 +95,8 @@ class FormattingVisitor(JavaParserVisitor):
         method_signature = f"{' '.join(modifiers)} {return_type} {method_name}".strip()
 
         self.rewriter.replaceRangeTokens(grandparent.start, ctx.identifier().stop, "\n" + self._get_indent() + method_signature)
+
+
 
         return self.visitChildren(ctx)
     
@@ -181,16 +182,6 @@ class FormattingVisitor(JavaParserVisitor):
             case "tabs":
                 return "\t" * self.indent_level
     
-    def _debug_rewriter_operations(self):
-        for program_name, rewrites in self.rewriter.programs.items():
-            print(f"Program: {program_name}")
-            for op in rewrites:
-                try:
-                    op_str = str(op)
-                except TypeError:
-                    op_str = repr(op)
-                print(f"Operation: {op_str}")
-
     def get_formatted_code(self, tree):
         self.imports = {
             'items': [],

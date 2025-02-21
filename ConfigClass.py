@@ -1,8 +1,12 @@
 import json
 
 class ConfigClass:
-    def __init__(self):
+    def __init__(self, config_path):
+        self.config_path = config_path
+
         self.default_config()
+
+        self.read_config()
 
     def default_config(self):
         self.indent_size = 4
@@ -13,17 +17,25 @@ class ConfigClass:
         self.class_modifier_order = ['public', 'abstract', 'final']
         self.method_modifier_order = ['public', 'static', 'final']
         self.naming_conventions = {
-            'class': '[A-Z][a-zA-Z0-9]*',  
-            'method': '[a-z][a-zA-Z0-9]*',  
-            'variable': '[a-z][a-zA-Z0-9]*',  
-            'parameter': '[a-z][a-zA-Z0-9]*', 
-            'constant': '[A-Z][A-Z0-9_]*' 
+            'class': 'pascalcase',
+            'method': 'camelcase',
+            'variable': 'camelcase',
+            'parameter': 'camelcase',
+            'constant': 'uppercase'
         }
+        """ 
+        "naming_conventions": {
+            "class": "[A-Z][a-zA-Z0-9]*",  
+            "method": "[a-z][a-zA-Z0-9]*",  
+            "variable": "[a-z][a-zA-Z0-9]*",  
+            "parameter": "[a-z][a-zA-Z0-9]*", 
+            "constant": "[A-Z][A-Z0-9_]*" 
+        }
+    """
         self.imports = {
             'order': 'preserve',
             'merge': False
         }
-
 
     def read_config(self):
         config_json = {}
@@ -37,6 +49,7 @@ class ConfigClass:
             print(f"Error reading config file: {e}.")
             exit(1)
 
+        
         self.indent_size = config_json.get('indent_size', self.indent_size)
         self.brace_style = config_json.get('brace_style', self.brace_style)
         self.space_around_operator = config_json.get('space_around_operator', self.space_around_operator)

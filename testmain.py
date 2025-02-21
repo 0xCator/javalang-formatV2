@@ -1,15 +1,12 @@
 from antlr4 import *
-from antlr4.TokenStreamRewriter import TokenStreamRewriter
 from JavaLexer import JavaLexer
 from JavaParser import JavaParser
 from FormattingVisitor import FormattingVisitor
 from ErrorLogger import ErrorLogger
 from ConfigClass import ConfigClass
-from NameConventionFormatterVisitor import NameConventionFormatterVisitor
 
-# ... (load_config and parse_java_code functions remain the same)
-def load_config():
-    config = ConfigClass()
+def load_config(config_path):
+    config = ConfigClass(config_path)
     return config
 
 def parse_java_code(file_path):
@@ -24,39 +21,13 @@ def parse_java_code(file_path):
     return tree, tokens
 
 tree, tokens = parse_java_code("test.java")
-configs = load_config()
+configs = load_config(".java-format.json")
 
-formatter_rewriter = TokenStreamRewriter(tokens)
+formatter = FormattingVisitor(tokens, configs)
 
-# Apply code formatting
-formatter = FormattingVisitor(formatter_rewriter, configs)
-formatter.visit(tree)
-
-formatted_code = formatter_rewriter.getDefaultText()
-print("Formatted Code:\n", formatted_code)
-
-formatted_lexer = JavaLexer(InputStream(formatted_code))
-formatted_tokens = CommonTokenStream(formatted_lexer)
-formatted_parser = JavaParser(formatted_tokens)
-formatted_tree = formatted_parser.compilationUnit()
-
-
-name_rewriter = TokenStreamRewriter(formatted_tokens) 
-
-# Apply naming convention formatting
-name_formatter = NameConventionFormatterVisitor(name_rewriter, configs)
-name_formatter.visit(formatted_tree) 
-
-
-name_formatted_code = name_rewriter.getDefaultText()
-print("\nName Formatted Code:\n", name_formatted_code)  
-
-error_logger = ErrorLogger(configs)
-errors = error_logger.find_errors(formatted_tree)  # Check errors on the formatted tree
-
+errorvisitor = ErrorLogger(configs)
+errors = errorvisitor.find_errors(tree)
 if errors:
-    print("Naming Convention Errors:")
     for error in errors:
         print(error)
-else:
-    print("No naming convention errors found.")
+print(formatter.get_formatted_code(tree))

@@ -346,74 +346,65 @@ class RegexRewriter:
             
         return self._process_components(input_string, inner_components, remaining_insertions)
     
-
-    def _process_components(self, input_string: str, components: List[Component], remaining_insertions: int) -> Tuple[str, int]:
-
+    def _process_components(self, input_string: str, components: List[Component], 
+                           remaining_insertions: int) -> Tuple[str, int]:
+        
         result = list(input_string)
         input_pos = 0
         result_pos = 0
         initial_insertions = remaining_insertions
-
+        
         component_idx = 0
         while component_idx < len(components):
             component = components[component_idx]
-
+            
             if component.is_anchor:
                 component_idx += 1
                 continue
-
+                
             if component.type == 'alternation':
                 segment = input_string[input_pos:] if input_pos < len(input_string) else ""
-                alt_result, insertions_used = self._handle_alternation(component, segment, remaining_insertions)
-
+                alt_result, insertions_used = self._handle_alternation(
+                    component, segment, remaining_insertions)
+                
                 for i, c in enumerate(alt_result):
                     if result_pos + i < len(result):
                         result[result_pos + i] = c
                     else:
                         result.append(c)
-
-
+                
                 result_pos += len(alt_result)
                 input_pos += min(len(alt_result), len(segment))
                 remaining_insertions -= insertions_used
-
+                
             elif component.type == 'group':
                 segment = input_string[input_pos:] if input_pos < len(input_string) else ""
-                group_result, insertions_used = self._handle_group(component, segment, remaining_insertions)
-
-
+                group_result, insertions_used = self._handle_group(
+                    component, segment, remaining_insertions)
+                
                 for i, c in enumerate(group_result):
                     if result_pos + i < len(result):
                         result[result_pos + i] = c
                     else:
                         result.append(c)
-
-
+                
                 result_pos += len(group_result)
                 input_pos += min(len(group_result), len(segment))
                 remaining_insertions -= insertions_used
-
+                
             else:
                 chars_processed = 0
                 insertions_used = 0
-
+                
                 for _ in range(component.min_repeat):
                     if input_pos < len(input_string):
-                        current_char = input_string[input_pos]
-
-                        if current_char == '_' and input_pos + 1 < len(input_string):
-                            next_char = input_string[input_pos + 1]
-                            if next_char.isalpha():
-                                current_char = next_char.upper()
-                                input_pos += 1
-
                         if component.type in ('char_class', 'literal'):
-                            transformed = self._transform_char(current_char, component.value)
+                            transformed = self._transform_char(input_string[input_pos], component.value)
                         else:
-                            transformed = current_char
-
+                            transformed = None
+                        
                         if transformed is not None:
-
+                            # Character was transformable
                             if result_pos < len(result):
                                 result[result_pos] = transformed
                             else:
@@ -442,26 +433,19 @@ class RegexRewriter:
                         chars_processed += 1
                     else:
                         raise ImpossiblePatternError("Input too short and no insertions left")
-
-
+                
                 max_additional = component.max_repeat - component.min_repeat
                 additional_processed = 0
-
-                while ((component.max_repeat == float('inf') or additional_processed < max_additional) and input_pos < len(input_string)):
-                    current_char = input_string[input_pos]
-
-                    if current_char == '_' and input_pos + 1 < len(input_string):
-                        next_char = input_string[input_pos + 1]
-                        if next_char.isalpha():
-                            current_char = next_char.upper()
-                            input_pos += 1
-
+                
+                while ((component.max_repeat == float('inf') or 
+                       additional_processed < max_additional) and
+                       input_pos < len(input_string)):
+                    
                     if component.type in ('char_class', 'literal'):
-                        transformed = self._transform_char(current_char, component.value)
+                        transformed = self._transform_char(input_string[input_pos], component.value)
                     else:
-                        transformed = current_char
-
-
+                        transformed = None
+                        
                     if transformed is not None:
                         if result_pos < len(result):
                             result[result_pos] = transformed
@@ -473,14 +457,13 @@ class RegexRewriter:
                         additional_processed += 1
                     else:
                         break
-
-
+            
             component_idx += 1
-
+        
         insertions_used = initial_insertions - remaining_insertions
-
+        
         return ''.join(result[:result_pos]), insertions_used
-
+        
     def rewrite(self, input_string: str, pattern: str) -> str:
         if re.fullmatch(pattern, input_string):
             return input_string
@@ -548,4 +531,3 @@ class RegexRewriter:
                     return literal_part
             
             return input_string
-
