@@ -27,9 +27,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
         class_name = ctx.identifier().getText()
         class_config = self.config.naming_conventions['class']
         class_pattern = self.check_convention(class_config)
-        parsed_components = self.regex_analyzer.analyze(class_pattern)
 
-        if not self._matches(class_name, parsed_components):
+        if not self._matches(class_name, class_pattern):
             new_class_name = self.regex_rewriter.rewrite(class_name, class_pattern)
             self.rewriter.replaceSingleToken(ctx.identifier().start, new_class_name)
             self.replaceUsage(class_name, new_class_name)
@@ -40,9 +39,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
         class_name = ctx.createdName().getText()
         class_config = self.config.naming_conventions['class']
         class_pattern = self.check_convention(class_config)
-        parsed_components = self.regex_analyzer.analyze(class_pattern)
 
-        if not self._matches(class_name, parsed_components):
+        if not self._matches(class_name, class_pattern):
             new_class_name = self.regex_rewriter.rewrite(class_name, class_pattern)
             self.rewriter.replaceSingleToken(ctx.createdName().start, new_class_name)
             self.replaceUsage(class_name, new_class_name)
@@ -53,12 +51,11 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
         identifiers = ctx.identifier()
         class_config = self.config.naming_conventions['class']
         class_pattern = self.check_convention(class_config)
-        parsed_components = self.regex_analyzer.analyze(class_pattern)
 
         for identifier in identifiers:
             name = identifier.getText()
 
-            if not self._matches(name, parsed_components):
+            if not self._matches(name, class_pattern):
                 new_name = self.regex_rewriter.rewrite(name, class_pattern)
                 self.rewriter.replaceSingleToken(identifier.start, new_name)
                 self.replaceUsage(name, new_name)
@@ -70,9 +67,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
             type_name = ctx.classOrInterfaceType().getText()
             class_config = self.config.naming_conventions['class']
             class_pattern = self.check_convention(class_config)
-            parsed_components = self.regex_analyzer.analyze(class_pattern)
 
-            if not self._matches(type_name, parsed_components):
+            if not self._matches(type_name, class_pattern):
                 new_type_name = self.regex_rewriter.rewrite(type_name, class_pattern)
                 self.rewriter.replaceSingleToken(ctx.classOrInterfaceType().start, new_type_name)
                 self.replaceUsage(type_name, new_type_name)
@@ -84,9 +80,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
             static_call = ctx.primary().identifier().getText()
             class_config = self.config.naming_conventions['class']
             class_pattern = self.check_convention(class_config)
-            parsed_components = self.regex_analyzer.analyze(class_pattern)
 
-            if not self._matches(static_call, parsed_components):
+            if not self._matches(static_call, class_pattern):
                 new_static_call = self.regex_rewriter.rewrite(static_call, class_pattern)
                 self.rewriter.replaceSingleToken(ctx.primary().identifier().start, new_static_call)
                 self.replaceUsage(static_call, new_static_call)
@@ -97,9 +92,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
         annotation_name = ctx.qualifiedName().getText()
         class_config = self.config.naming_conventions['class']
         class_pattern = self.check_convention(class_config)
-        parsed_components = self.regex_analyzer.analyze(class_pattern)
 
-        if not self._matches(annotation_name, parsed_components):
+        if not self._matches(annotation_name, class_pattern):
             new_annotation_name = self.regex_rewriter.rewrite(annotation_name, class_pattern)
             self.rewriter.replaceSingleToken(ctx.qualifiedName().start, new_annotation_name)
             self.replaceUsage(annotation_name, new_annotation_name)
@@ -110,10 +104,9 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
         method_name = ctx.identifier().getText()
         method_config = self.config.naming_conventions['method']
         method_pattern = self.check_convention(method_config)
-        parsed_components = self.regex_analyzer.analyze(method_pattern)
         self.function_calls.append(f"Declared: {method_name}")
 
-        if not self._matches(method_name, parsed_components):
+        if not self._matches(method_name, method_pattern):
             new_method_name = self.regex_rewriter.rewrite(method_name, method_pattern)
             self.function_calls.append(new_method_name)
             self.rewriter.replaceSingleToken(ctx.identifier().start, new_method_name)
@@ -127,24 +120,21 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
         is_static = "static" in modifiers
         is_final = "final" in modifiers
 
-
         variable_config = self.config.naming_conventions['variable']
         variable_pattern = self.check_convention(variable_config)
         constant_config = self.config.naming_conventions['constant']
         constant_pattern = self.check_convention(constant_config)
-        variable_components = self.regex_analyzer.analyze(variable_pattern)
-        constant_components = self.regex_analyzer.analyze(constant_pattern)
 
         for declarator in declarators.variableDeclarator():
             field_name = declarator.variableDeclaratorId().getText()
 
             if is_static and is_final:
-                if not self._matches(field_name, constant_components):
+                if not self._matches(field_name, constant_pattern):
                     new_field_name = self.regex_rewriter.rewrite(field_name, constant_pattern)
                     self.rewriter.replaceSingleToken(declarator.variableDeclaratorId().start, new_field_name)
                     self.replaceUsage(field_name, new_field_name)
             else:
-                if not self._matches(field_name, variable_components):
+                if not self._matches(field_name, variable_pattern):
                     new_field_name = self.regex_rewriter.rewrite(field_name, variable_pattern)
                     self.rewriter.replaceSingleToken(declarator.variableDeclaratorId().start, new_field_name)
                     self.replaceUsage(field_name, new_field_name)
@@ -155,12 +145,11 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
         declarators = ctx.variableDeclarators()
         variable_config = self.config.naming_conventions['variable']
         variable_pattern = self.check_convention(variable_config)
-        parsed_components = self.regex_analyzer.analyze(variable_pattern)
 
         for declarator in declarators.variableDeclarator():
             variable_name = declarator.variableDeclaratorId().getText()
 
-            if not self._matches(variable_name, parsed_components):
+            if not self._matches(variable_name, variable_pattern):
                 new_variable_name = self.regex_rewriter.rewrite(variable_name, variable_pattern)
                 self.rewriter.replaceSingleToken(declarator.variableDeclaratorId().start, new_variable_name)
                 self.replaceUsage(variable_name, new_variable_name)
@@ -171,9 +160,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
         variable_name = ctx.variableDeclaratorId().getText()
         variable_config = self.config.naming_conventions['variable']
         variable_pattern = self.check_convention(variable_config)
-        parsed_components = self.regex_analyzer.analyze(variable_pattern)
 
-        if not self._matches(variable_name, parsed_components):
+        if not self._matches(variable_name, variable_pattern):
             new_variable_name = self.regex_rewriter.rewrite(variable_name, variable_pattern)
             self.rewriter.replaceSingleToken(ctx.variableDeclaratorId().start, new_variable_name)
             self.replaceUsage(variable_name, new_variable_name)
@@ -184,9 +172,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
         parameter_name = ctx.variableDeclaratorId().getText()
         parameter_config = self.config.naming_conventions['parameter']
         parameter_pattern = self.check_convention(parameter_config)
-        parsed_components = self.regex_analyzer.analyze(parameter_pattern)
 
-        if not self._matches(parameter_name, parsed_components):
+        if not self._matches(parameter_name, parameter_pattern):
             new_parameter_name = self.regex_rewriter.rewrite(parameter_name, parameter_pattern)
             self.rewriter.replaceSingleToken(ctx.variableDeclaratorId().start, new_parameter_name)
             self.replaceParameterInMethodBody(ctx, parameter_name, new_parameter_name)
@@ -197,9 +184,8 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
         method_name = ctx.identifier().getText()
         method_config = self.config.naming_conventions['method']
         method_pattern = self.check_convention(method_config)
-        parsed_components = self.regex_analyzer.analyze(method_pattern)
 
-        if not self._matches(method_name, parsed_components):
+        if not self._matches(method_name, method_pattern):
             new_method_name = self.regex_rewriter.rewrite(method_name, method_pattern)
             self.rewriter.replaceSingleToken(ctx.identifier().start, new_method_name)
             self.replaceUsage(method_name, new_method_name)
@@ -207,9 +193,9 @@ class NameConventionFormatterVisitor(JavaParserVisitor):
         self.function_calls.append(method_name)
         return self.visitChildren(ctx)
 
-    def _matches(self, input_string, components):
+    def _matches(self, input_string, pattern):
         try:
-            transformed_string, _ = self.regex_rewriter._process_components(input_string, components, self.regex_rewriter.max_insertions)
+            transformed_string = self.regex_rewriter.rewrite(input_string, pattern)
             print(transformed_string, input_string)
             return transformed_string == input_string
         except Exception as e:
