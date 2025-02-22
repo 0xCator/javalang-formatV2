@@ -9,10 +9,8 @@ class ConfigClass:
         self.read_config()
 
     def default_config(self):
-        self.indent_size = 4
         self.brace_style = 'break'
         self.space_around_operator = True
-        self.indentation_type = 'spaces'
         self.max_line_length = 100
         self.class_modifier_order = ['public', 'abstract', 'final']
         self.method_modifier_order = ['public', 'static', 'final']
@@ -33,8 +31,13 @@ class ConfigClass:
         }
     """
         self.imports = {
-            'order': 'preserve',
+            'order': 'preserve', # 'preserve' or 'sort'
             'merge': False
+        }
+        self.indents = {
+            'size': 4,
+            'type': 'spaces', # 'spaces' or 'tabs'
+            'switch_case_labels': 'indent', # 'indent' or 'no_indent'
         }
 
     def read_config(self):
@@ -50,15 +53,14 @@ class ConfigClass:
             exit(1)
 
         
-        self.indent_size = config_json.get('indent_size', self.indent_size)
         self.brace_style = config_json.get('brace_style', self.brace_style)
         self.space_around_operator = config_json.get('space_around_operator', self.space_around_operator)
-        self.indentation_type = config_json.get('indentation_type', self.indentation_type)
         self.max_line_length = config_json.get('max_line_length', self.max_line_length)
         self.class_modifier_order = config_json.get('class_modifier_order', self.class_modifier_order)
         self.method_modifier_order = config_json.get('method_modifier_order', self.method_modifier_order)
         self.naming_conventions = config_json.get('naming_conventions', self.naming_conventions)
         self.imports = config_json.get('imports', self.imports)
+        self.indents = config_json.get('indents', self.indents)
 
     # Kept for future use
     def save_config(self):
@@ -69,7 +71,9 @@ class ConfigClass:
             'max_line_length': self.max_line_length,
             'class_modifier_order': self.class_modifier_order,
             'method_modifier_order': self.method_modifier_order,
-            'naming_conventions': self.naming_conventions
+            'naming_conventions': self.naming_conventions,
+            'imports': self.imports,
+            'indents': self.indents
         }
 
         with open(self.config_path, 'w') as f:
