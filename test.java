@@ -7,4 +7,3 @@ public class HelloWorld{
     public void nestedLoops(){for(int i=0;i<5;i++){for(int j=0;j<5;j++){System.out.println(i*j);}}}
     public void longLine() { System.out.println("This is a really long line that definitely exceeds 100 characters for testing purposes in your Java formatter tool."); }
 }
-

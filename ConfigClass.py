@@ -21,6 +21,15 @@ class ConfigClass:
             'parameter': 'camelcase',
             'constant': 'uppercase'
         }
+        """ 
+        "naming_conventions": {
+            "class": "[A-Z][a-zA-Z0-9]*",  
+            "method": "[a-z][a-zA-Z0-9]*",  
+            "variable": "[a-z][a-zA-Z0-9]*",  
+            "parameter": "[a-z][a-zA-Z0-9]*", 
+            "constant": "[A-Z][A-Z0-9_]*" 
+        }
+    """
         self.imports = {
             'order': 'preserve', # 'preserve' or 'sort'
             'merge': False

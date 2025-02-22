@@ -531,4 +531,3 @@ class RegexRewriter:
                     return literal_part
             
             return input_string
-

@@ -273,7 +273,7 @@ class FormattingVisitor(JavaParserVisitor):
 
         if self.config.imports['order'] == "sort":
             self._order_imports()
-
+            
         formatted_text: str = self.rewriter.getDefaultText()
         return self._apply_max_line_length(formatted_text)
 
