@@ -2,6 +2,7 @@ from typing import Optional
 from JavaParser import JavaParser
 from JavaParserVisitor import JavaParserVisitor
 from antlr4.TokenStreamRewriter import TokenStreamRewriter
+from antlr4.Token import CommonToken
 from functools import wraps
 from ConfigClass import ConfigClass
 
@@ -242,6 +243,47 @@ class FormattingVisitor(JavaParserVisitor):
             self.rewriter.replaceSingleToken(open_brace, f"\n{self._get_indent()}" + "{")
         
         self.rewriter.replaceSingleToken(close_brace, f"\n{self._get_indent()}" + "}")
+        return self.visitChildren(ctx)
+
+    def visitMethodCall(self, ctx: JavaParser.MethodCallContext):
+        arguments : JavaParser.ArgumentsContext = ctx.arguments()
+        if arguments:
+            open_paren : CommonToken = arguments.LPAREN().getSymbol()
+            close_paren : CommonToken = arguments.RPAREN().getSymbol()
+            parameters : JavaParser.ExpressionListContext = arguments.expressionList()
+            parameter_size = int((parameters.getChildCount() + 1) / 2) # Getting the actual number of parameters
+            
+            print(parameter_size)
+            if parameter_size > 1 and self.config.aligns['after_open_bracket'] != False:
+                match self.config.aligns['after_open_bracket']:
+                    case 'align':
+                        if not parameter_size > self.config.aligns['parameters_before_align']:
+                            return self.visitChildren(ctx)
+
+                        second_parameter = parameters.getChild(2)
+                        align_spaces = " " * (open_paren.column + 1)
+                        self.rewriter.insertBeforeToken(second_parameter.start, f"\n{align_spaces}")
+
+                    case 'dont_align':
+                        if not parameter_size > self.config.aligns['parameters_before_align']:
+                            return self.visitChildren(ctx)
+
+                        second_parameter = parameters.getChild(2)
+                        self.indent_level += 1
+                        self.rewriter.insertBeforeToken(second_parameter.start, f"\n{self._get_indent()}")
+                        self.indent_level -= 1
+
+                    case 'always_break':
+                        self.indent_level += 1
+                        self.rewriter.insertBeforeToken(parameters.start, f"\n{self._get_indent()}")
+                        self.indent_level -= 1
+
+                    case 'block_indent':
+                        self.indent_level += 1
+                        self.rewriter.insertBeforeToken(parameters.start, f"\n{self._get_indent()}")
+                        self.indent_level -= 1
+                        self.rewriter.insertBeforeIndex(close_paren.tokenIndex, f"\n{self._get_indent()}")
+
         return self.visitChildren(ctx)
 
     

@@ -17,7 +17,11 @@
     },
     "indents": {
         "size": 4,
-        "type": "tabs",
+        "type": "spaces",
         "switch_case_labels": "indent"
+    },
+    "aligns" : {
+        "after_open_bracket": "align",
+        "parameters_before_align": 1
     }
 }
