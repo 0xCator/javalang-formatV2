@@ -17,6 +17,7 @@ def parse_java_code(file_path):
     tokens = CommonTokenStream(lexer)
     parser = JavaParser(tokens)
     tree = parser.compilationUnit()
+    print(tree.toStringTree(recog=parser))
 
     return tree, tokens
 
