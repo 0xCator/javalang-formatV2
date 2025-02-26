@@ -158,6 +158,7 @@ class FormattingVisitor(JavaParserVisitor):
     def visitMethodDeclaration(self, ctx: JavaParser.MethodDeclarationContext):
         return_type = ctx.typeTypeOrVoid().getText()
         method_name = ctx.identifier().getText()
+        arguments : JavaParser.formalParameters = ctx.formalParameters()
         modifiers = []
         parent = ctx.parentCtx  
         grandparent: Optional[JavaParser.StatementContext] = None
@@ -172,6 +173,17 @@ class FormattingVisitor(JavaParserVisitor):
 
         if grandparent: 
             self.rewriter.replaceRangeTokens(grandparent.start, ctx.identifier().stop, f"\n{self._get_indent()}{method_signature}")
+        
+        if arguments:
+            open_paren = arguments.LPAREN().getSymbol()
+            close_paren = arguments.RPAREN().getSymbol()
+            parameters = arguments.formalParameterList()
+            if parameters:
+                parameter_size = int((parameters.getChildCount() + 1) / 2)
+
+                if parameter_size > 1 and self.config.aligns['after_open_bracket'] != False:
+                    self._apply_bracket_alignment(open_paren, parameters, close_paren, parameter_size)
+
         return self.visitChildren(ctx)
     
     def visitStatement(self, ctx: JavaParser.StatementContext):
@@ -257,44 +269,53 @@ class FormattingVisitor(JavaParserVisitor):
             parameter_size = int((parameters.getChildCount() + 1) / 2) # Getting the actual number of parameters
             
             if parameter_size > 1 and self.config.aligns['after_open_bracket'] != False:
-                match self.config.aligns['after_open_bracket']:
-                    case 'align':
-                        max_parameter_size = self.config.aligns['parameters_before_align']
-                        if not parameter_size > max_parameter_size:
-                            return self.visitChildren(ctx)
-
-                        for i in range(max_parameter_size, parameter_size, max_parameter_size):
-                            capture_pos = i * 2
-                            parameter = parameters.getChild(capture_pos)
-                            align_spaces = " " * (open_paren.column + 1)
-                            self.rewriter.insertBeforeToken(parameter.start, f"\n{align_spaces}")
-
-                    case 'dont_align':
-                        max_parameter_size = self.config.aligns['parameters_before_align']
-                        if not parameter_size > max_parameter_size:
-                            return self.visitChildren(ctx)
-
-                        for i in range(max_parameter_size, parameter_size, max_parameter_size):
-                            capture_pos = i * 2
-                            parameter = parameters.getChild(capture_pos)
-                            self.indent_level += 1
-                            self.rewriter.insertBeforeToken(parameter.start, f"\n{self._get_indent()}")
-                            self.indent_level -= 1
-
-                    case 'always_break':
-                        self.indent_level += 1
-                        self.rewriter.insertBeforeToken(parameters.start, f"\n{self._get_indent()}")
-                        self.indent_level -= 1
-
-                    case 'block_indent':
-                        self.indent_level += 1
-                        self.rewriter.insertBeforeToken(parameters.start, f"\n{self._get_indent()}")
-                        self.indent_level -= 1
-                        self.rewriter.insertBeforeIndex(close_paren.tokenIndex, f"\n{self._get_indent()}")
+                self._apply_bracket_alignment(open_paren, parameters, close_paren, parameter_size)
 
         return self.visitChildren(ctx)
 
-    
+    def _apply_bracket_alignment(self, open_paren, parameters, close_paren, parameter_size):
+        match self.config.aligns['after_open_bracket']:
+            case 'align':
+                max_parameter_size = self.config.aligns['parameters_before_align']
+                if not parameter_size > max_parameter_size:
+                    return
+
+                for i in range(max_parameter_size, parameter_size, max_parameter_size):
+                    capture_pos = i * 2
+                    parameter = parameters.getChild(capture_pos)
+                    align_spaces = " " * (open_paren.column + 1)
+                    self.rewriter.insertBeforeToken(parameter.start, f"\n{align_spaces}")
+
+            case 'dont_align':
+                max_parameter_size = self.config.aligns['parameters_before_align']
+                if not parameter_size > max_parameter_size:
+                    return
+
+                for i in range(max_parameter_size, parameter_size, max_parameter_size):
+                    capture_pos = i * 2
+                    parameter = parameters.getChild(capture_pos)
+                    self.indent_level += 1
+                    self.rewriter.insertBeforeToken(parameter.start, f"\n{self._get_indent()}")
+                    self.indent_level -= 1
+
+            case 'always_break':
+                self.indent_level += 1
+                self.rewriter.insertBeforeToken(parameters.start, f"\n{self._get_indent()}")
+                self.indent_level -= 1
+
+            case 'block_indent':
+                self.indent_level += 1
+                self.rewriter.insertBeforeToken(parameters.start, f"\n{self._get_indent()}")
+                self.indent_level -= 1
+                self.rewriter.insertBeforeIndex(close_paren.tokenIndex, f"\n{self._get_indent()}")
+            
+            case 'all_parameters_on_new_line':
+                for i in range(1, parameter_size):
+                    capture_pos = i * 2
+                    parameter = parameters.getChild(capture_pos)
+                    align_spaces = " " * (open_paren.column + 1)
+                    self.rewriter.insertBeforeToken(parameter.start, f"\n{align_spaces}")
+
     def _remove_whitespace(self, pos):
         while self.rewriter.getTokenStream().get(pos).type in [JavaParser.WS] or self.rewriter.getTokenStream().get(pos).text == "\n":
             self.rewriter.deleteToken(pos)
