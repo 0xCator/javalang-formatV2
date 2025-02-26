@@ -1,6 +1,6 @@
 {
     "brace_style": "attach",  
-    "space_around_operators": true,
+    "space_around_operator": true,
     "max_line_length": 80,
     "class_modifier_order": ["public", "protected", "private", "abstract", "static", "final"],
     "method_modifier_order": ["public", "protected", "private", "abstract", "static", "final", "synchronized"],

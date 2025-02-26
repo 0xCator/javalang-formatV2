@@ -154,7 +154,6 @@ def test_brace_style_attach(config):
     """
     
     formatted = format_java(java_code, config)
-    print(formatted)
     try:
         assert "public class Test {" in formatted
         assert "public void testMethod() {" in formatted
@@ -740,7 +739,6 @@ def test_try_catch_blocks(config):
     """
     
     formatted = format_java(java_code, config)
-    print(formatted)
     
     try:
         assert "try {" in formatted or "try\n{" in formatted
