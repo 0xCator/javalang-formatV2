@@ -22,6 +22,6 @@
     },
     "aligns" : {
         "after_open_bracket": "align",
-        "parameters_before_align": 1
+        "parameters_before_align": 2
     }
 }

@@ -251,27 +251,35 @@ class FormattingVisitor(JavaParserVisitor):
             open_paren : CommonToken = arguments.LPAREN().getSymbol()
             close_paren : CommonToken = arguments.RPAREN().getSymbol()
             parameters : JavaParser.ExpressionListContext = arguments.expressionList()
+            if not parameters:
+                return self.visitChildren(ctx)
+            
             parameter_size = int((parameters.getChildCount() + 1) / 2) # Getting the actual number of parameters
             
-            print(parameter_size)
             if parameter_size > 1 and self.config.aligns['after_open_bracket'] != False:
                 match self.config.aligns['after_open_bracket']:
                     case 'align':
-                        if not parameter_size > self.config.aligns['parameters_before_align']:
+                        max_parameter_size = self.config.aligns['parameters_before_align']
+                        if not parameter_size > max_parameter_size:
                             return self.visitChildren(ctx)
 
-                        second_parameter = parameters.getChild(2)
-                        align_spaces = " " * (open_paren.column + 1)
-                        self.rewriter.insertBeforeToken(second_parameter.start, f"\n{align_spaces}")
+                        for i in range(max_parameter_size, parameter_size, max_parameter_size):
+                            capture_pos = i * 2
+                            parameter = parameters.getChild(capture_pos)
+                            align_spaces = " " * (open_paren.column + 1)
+                            self.rewriter.insertBeforeToken(parameter.start, f"\n{align_spaces}")
 
                     case 'dont_align':
-                        if not parameter_size > self.config.aligns['parameters_before_align']:
+                        max_parameter_size = self.config.aligns['parameters_before_align']
+                        if not parameter_size > max_parameter_size:
                             return self.visitChildren(ctx)
 
-                        second_parameter = parameters.getChild(2)
-                        self.indent_level += 1
-                        self.rewriter.insertBeforeToken(second_parameter.start, f"\n{self._get_indent()}")
-                        self.indent_level -= 1
+                        for i in range(max_parameter_size, parameter_size, max_parameter_size):
+                            capture_pos = i * 2
+                            parameter = parameters.getChild(capture_pos)
+                            self.indent_level += 1
+                            self.rewriter.insertBeforeToken(parameter.start, f"\n{self._get_indent()}")
+                            self.indent_level -= 1
 
                     case 'always_break':
                         self.indent_level += 1
