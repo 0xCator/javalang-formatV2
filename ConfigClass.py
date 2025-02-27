@@ -21,15 +21,6 @@ class ConfigClass:
             'parameter': 'camelcase',
             'constant': 'uppercase'
         }
-        """ 
-        "naming_conventions": {
-            "class": "[A-Z][a-zA-Z0-9]*",  
-            "method": "[a-z][a-zA-Z0-9]*",  
-            "variable": "[a-z][a-zA-Z0-9]*",  
-            "parameter": "[a-z][a-zA-Z0-9]*", 
-            "constant": "[A-Z][A-Z0-9_]*" 
-        }
-    """
         self.imports = {
             'order': 'preserve', # 'preserve' or 'sort'
             'merge': False
@@ -38,6 +29,10 @@ class ConfigClass:
             'size': 4,
             'type': 'spaces', # 'spaces' or 'tabs'
             'switch_case_labels': 'indent', # 'indent' or 'no_indent'
+        }
+        self.aligns = {
+            'after_open_bracket': 'align', # false, 'align', 'dont_align', 'always_break', 'block_indent'
+            'parameters_before_align': 1 # How many parameters before breaking if 'after_open_bracket' is 'align' or 'dont_align'
         }
 
     def read_config(self):
@@ -61,6 +56,7 @@ class ConfigClass:
         self.naming_conventions = config_json.get('naming_conventions', self.naming_conventions)
         self.imports = config_json.get('imports', self.imports)
         self.indents = config_json.get('indents', self.indents)
+        self.aligns = config_json.get('aligns', self.aligns)
 
     # Kept for future use
     def save_config(self):
@@ -73,7 +69,8 @@ class ConfigClass:
             'method_modifier_order': self.method_modifier_order,
             'naming_conventions': self.naming_conventions,
             'imports': self.imports,
-            'indents': self.indents
+            'indents': self.indents,
+            'aligns': self.aligns
         }
 
         with open(self.config_path, 'w') as f:

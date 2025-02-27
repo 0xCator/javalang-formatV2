@@ -18,9 +18,11 @@ def parse_java_code(file_path):
     parser = JavaParser(tokens)
     tree = parser.compilationUnit()
 
+    #print(tree.toStringTree(recog=parser))
+
     return tree, tokens
 
-tree, tokens = parse_java_code("test.java")
+tree, tokens = parse_java_code("test2.java")
 configs = load_config(".java-format.json")
 
 formatter = FormattingVisitor(tokens, configs)
@@ -30,4 +32,6 @@ errors = errorvisitor.find_errors(tree)
 if errors:
     for error in errors:
         print(error)
-print(formatter.get_formatted_code(tree))
+
+formatted_code = formatter.get_formatted_code(tree)
+print(formatted_code)
