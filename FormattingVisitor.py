@@ -9,7 +9,7 @@ from ConfigClass import ConfigClass
 class FormattingVisitor(JavaParserVisitor):
     def __init__(self, tokens, config: ConfigClass):
         self.rewriter : TokenStreamRewriter = TokenStreamRewriter(tokens)
-        self.config = config
+        self.config:ConfigClass = config
         self.indent_level: int = 0
         self.imports = {
             'items': [],
@@ -343,6 +343,92 @@ class FormattingVisitor(JavaParserVisitor):
             case "tabs":
                 return "\t" * self.indent_level
     
+    
+    def visitVariableDeclarator(self, ctx: JavaParser.VariableDeclaratorContext):
+        assignment = ctx.ASSIGN().symbol
+        if assignment:
+            if self.config.space_around_operator:
+                prev_token_index = assignment.tokenIndex - 1
+                next_token_index = assignment.tokenIndex + 1
+
+                # add space before the assignment if needed
+                prev_token = self.rewriter.getTokenStream().get(prev_token_index)
+                if prev_token.type != JavaParser.WS and prev_token.text != " ":
+                    self.rewriter.insertBeforeIndex(assignment.tokenIndex, " ")
+
+                # add space after the assignment if needed
+                next_token = self.rewriter.getTokenStream().get(next_token_index)
+                if next_token.type != JavaParser.WS and next_token.text != " ":
+                    self.rewriter.insertAfter(assignment.tokenIndex, " ")
+        return super().visitVariableDeclarator(ctx)
+    def visitBinaryOperatorExpression(self, ctx: JavaParser.BinaryOperatorExpressionContext):
+        if self.config.space_around_operator and ctx.bop:
+
+            # get operator token
+            operator = ctx.bop
+
+            prev_token_index = operator.tokenIndex - 1
+            next_token_index = operator.tokenIndex + 1
+
+            # add space before the operator if needed
+            prev_token = self.rewriter.getTokenStream().get(prev_token_index)
+            if prev_token.type != JavaParser.WS and prev_token.text != " ":
+                self.rewriter.insertBeforeIndex(operator.tokenIndex, " ")
+
+            # add space after the operator if needed
+            next_token = self.rewriter.getTokenStream().get(next_token_index)
+            if next_token.type != JavaParser.WS and next_token.text != " ":
+                self.rewriter.insertAfter(operator.tokenIndex, " ")
+
+        return self.visitChildren(ctx)
+
+    def visitUnaryOperatorExpression(self, ctx: JavaParser.UnaryOperatorExpressionContext):
+        if self.config.space_around_operator:
+            # fore prefix operator 
+            if hasattr(ctx, 'prefix') and ctx.prefix:
+                next_token_index = ctx.prefix.tokenIndex + 1
+                next_token = self.rewriter.getTokenStream().get(next_token_index)
+
+                # don't add space after `++` or `--`
+                if ctx.prefix.type not in [JavaParser.INC, JavaParser.DEC]:
+                    if next_token.type != JavaParser.WS and next_token.text != " ":
+                        self.rewriter.insertAfter(ctx.prefix.tokenIndex, " ")
+        return self.visitChildren(ctx)
+
+    def visitLambdaExpression(self, ctx: JavaParser.LambdaExpressionContext):
+        if self.config.space_around_operator:
+            arrow = ctx.ARROW().symbol
+            prev_token_index = arrow.tokenIndex - 1
+            next_token_index = arrow.tokenIndex + 1
+
+            # add space before the arrow if needed
+            prev_token = self.rewriter.getTokenStream().get(prev_token_index)
+            if prev_token.type != JavaParser.WS and prev_token.text != " ":
+                self.rewriter.insertBeforeIndex(arrow.tokenIndex, " ")
+
+            # add space after the arrow if needed
+            next_token = self.rewriter.getTokenStream().get(next_token_index)
+            if next_token.type != JavaParser.WS and next_token.text != " ":
+                self.rewriter.insertAfter(arrow.tokenIndex, " ")
+        return self.visitChildren(ctx)
+
+    def visitMethodReferenceExpression(self, ctx: JavaParser.MethodReferenceExpressionContext):
+        if self.config.space_around_operator:
+            double_colon = ctx.COLONCOLON().symbol
+            prev_token_index = double_colon.tokenIndex - 1
+            next_token_index = double_colon.tokenIndex + 1
+
+            # add space before the double colon if needed
+            prev_token = self.rewriter.getTokenStream().get(prev_token_index)
+            if prev_token.type != JavaParser.WS and prev_token.text != " ":
+                self.rewriter.insertBeforeIndex(double_colon.tokenIndex, " ")
+
+            # add space after the double colon if needed
+            next_token = self.rewriter.getTokenStream().get(next_token_index)
+            if next_token.type != JavaParser.WS and next_token.text != " ":
+                self.rewriter.insertAfter(double_colon.tokenIndex, " ")
+        return self.visitChildren(ctx)
+
     def get_formatted_code(self, tree):
         self.imports = {
             'items': [],
@@ -352,9 +438,10 @@ class FormattingVisitor(JavaParserVisitor):
 
         self.visit(tree)
 
+
         if self.config.imports['order'] == "sort":
             self._order_imports()
+
             
         formatted_text: str = self.rewriter.getDefaultText()
         return self._apply_max_line_length(formatted_text)
-
