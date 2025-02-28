@@ -32,7 +32,7 @@ class ConfigClass:
         }
         self.aligns = {
             'after_open_bracket': 'align', # false, 'align', 'dont_align', 'always_break', 'block_indent'
-            'parameters_before_align': 1 # How many parameters before breaking if 'after_open_bracket' is 'align' or 'dont_align'
+            'parameters_before_align': 2 # How many parameters before breaking if 'after_open_bracket' is 'align' or 'dont_align'
         }
 
     def read_config(self):
