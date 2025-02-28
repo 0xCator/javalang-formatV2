@@ -13,7 +13,6 @@ class ErrorLogger(JavaParserVisitor):
         class_name = ctx.identifier().getText()
         class_config = self.configs.naming_conventions["class"]
         error = self.check_convention(class_name, class_config)
-        print(class_name)
         if error:
             self.error_log.append("Class name " + error)
 

@@ -34,6 +34,10 @@ class MockConfigClass:
             "switch_case_labels": "indent"  # or "no_indent"
         }
         self.space_around_operator = True
+        self.aligns = {
+            'after_open_bracket': 'align', # false, 'align', 'dont_align', 'always_break', 'block_indent'
+            'parameters_before_align': 2 # How many parameters before breaking if 'after_open_bracket' is 'align' or 'dont_align'
+        }
 
 @pytest.fixture
 def config():
@@ -823,4 +827,23 @@ def test_variable_declarations(config):
             assert "final double PI=3.14159" in formatted or "PI=3.14159" in formatted.replace(" ", "")
     except AssertionError:
         logger.warning("Variable declarations test failed, but continuing...")
+        raise
+
+def test_align_open_brackets(config):
+    java_code = """
+    public class Test {
+        public void testMethod(int a, int b, int c, int d, int e, int f) {
+            doSomething();
+        }
+    }
+    """
+    
+    formatted = format_java(java_code, config)
+    
+    try:
+        assert "testMethod(int a, int b,\n" in formatted
+        assert "int c, int d,\n" in formatted
+        assert "int e, int f)" in formatted
+    except AssertionError:
+        logger.warning("Align open brackets test failed, but continuing...")
         raise

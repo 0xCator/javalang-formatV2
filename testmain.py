@@ -29,19 +29,7 @@ def parse_java_code(file_path):
 
     return tree, tokens
 
-# def return_single_line(file_path):
-#     with open(file_path, "r") as file:
-#         code = file.read()
-    
-#     cleaned_code = re.sub(r'[\t\n]+', '', code)  # Remove tabs and newlines
-#     cleaned_code = re.sub(r' {2,}', ' ', cleaned_code)
-#     cleaned_code = re.sub(r'^ +', '', cleaned_code, flags=re.M)
-
-#     return cleaned_code
-
-# print(return_single_line("test.java"))
-
-tree, tokens = parse_java_code("test3.java")
+tree, tokens = parse_java_code("test2.java")
 configs = load_config(".java-format.json")
 
 formatter = FormattingVisitor(tokens, configs)
@@ -51,4 +39,6 @@ errors = errorvisitor.find_errors(tree)
 if errors:
     for error in errors:
         print(error)
-print(formatter.get_formatted_code(tree))
+
+formatted_code = formatter.get_formatted_code(tree)
+print(formatted_code)
