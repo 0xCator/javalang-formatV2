@@ -132,22 +132,29 @@ class FormattingVisitor(JavaParserVisitor):
         class_signature = f"{' '.join(modifiers)} class {class_name}".strip()
         self.rewriter.replaceRangeTokens(parent.start, ctx.identifier().stop, class_signature)
 
-        class_body = ctx.classBody()
+        class_body : JavaParser.classBody = ctx.classBody()
 
         if class_body:
             open_brace = class_body.LBRACE().symbol
             close_brace = class_body.RBRACE().symbol
 
             self._remove_whitespace(open_brace.tokenIndex + 1)
+            self._remove_whitespace(open_brace.tokenIndex - 1)
             
             self._remove_whitespace(close_brace.tokenIndex - 1)
+            self._remove_whitespace(close_brace.tokenIndex + 1)
 
             if self.config.brace_style == "attach":
                 self.rewriter.replaceSingleToken(open_brace, " {")
             else:
                 self.rewriter.replaceSingleToken(open_brace, f"\n{self._get_indent()}"+"{")
 
-            self.rewriter.replaceSingleToken(close_brace, f"\n{self._get_indent()}" + "}")
+            if class_body.getChildCount() > 2:
+                brace_break = "\n"
+            else:
+                brace_break = ""
+
+            self.rewriter.replaceSingleToken(close_brace, f"{brace_break}{self._get_indent()}" + "}")
 
             self.indent_level += 1
 
@@ -226,6 +233,9 @@ class FormattingVisitor(JavaParserVisitor):
             if isinstance(parent, JavaParser.SwitchBlockStatementGroupContext):
                 in_switch = True
                 break
+            if isinstance(parent, JavaParser.FinallyBlockContext):
+                in_switch = True
+                break
             parent = parent.parentCtx  # Move up the tree
 
 
@@ -264,6 +274,8 @@ class FormattingVisitor(JavaParserVisitor):
     
     
     def visitVariableDeclarator(self, ctx: JavaParser.VariableDeclaratorContext):
+        if not ctx.ASSIGN():
+            return super().visitVariableDeclarator(ctx)
         assignment = ctx.ASSIGN().symbol
         if assignment:
             if self.config.space_around_operator:
@@ -363,4 +375,4 @@ class FormattingVisitor(JavaParserVisitor):
 
             
         formatted_text: str = self.rewriter.getDefaultText()
-        return formatted_text
+        return self._apply_max_line_length(formatted_text)

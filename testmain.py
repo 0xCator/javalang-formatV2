@@ -4,6 +4,7 @@ from JavaParser import JavaParser
 from FormattingVisitor import FormattingVisitor
 from ErrorLogger import ErrorLogger
 from ConfigClass import ConfigClass
+import re
 
 def load_config(config_path):
     config = ConfigClass(config_path)
@@ -12,15 +13,35 @@ def load_config(config_path):
 def parse_java_code(file_path):
     with open(file_path, "r") as file:
         code = file.read()
+    
+    cleaned_code = re.sub(r'[\t\n]+', '', code)  # Remove tabs and newlines
+    cleaned_code = re.sub(r' {2,}', ' ', cleaned_code)
+    cleaned_code = re.sub(r'^ +', '', cleaned_code, flags=re.M)
+
+    code = cleaned_code
 
     lexer = JavaLexer(InputStream(code))
     tokens = CommonTokenStream(lexer)
     parser = JavaParser(tokens)
     tree = parser.compilationUnit()
 
+    #print(tree.toStringTree(recog=parser))
+
     return tree, tokens
 
-tree, tokens = parse_java_code("test.java")
+# def return_single_line(file_path):
+#     with open(file_path, "r") as file:
+#         code = file.read()
+    
+#     cleaned_code = re.sub(r'[\t\n]+', '', code)  # Remove tabs and newlines
+#     cleaned_code = re.sub(r' {2,}', ' ', cleaned_code)
+#     cleaned_code = re.sub(r'^ +', '', cleaned_code, flags=re.M)
+
+#     return cleaned_code
+
+# print(return_single_line("test.java"))
+
+tree, tokens = parse_java_code("test3.java")
 configs = load_config(".java-format.json")
 
 formatter = FormattingVisitor(tokens, configs)
