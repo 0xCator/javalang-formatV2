@@ -2,7 +2,6 @@ from typing import Optional
 from JavaParser import JavaParser
 from JavaParserVisitor import JavaParserVisitor
 from antlr4.TokenStreamRewriter import TokenStreamRewriter
-from antlr4.Token import CommonToken
 from functools import wraps
 from ConfigClass import ConfigClass
 
@@ -17,80 +16,6 @@ class FormattingVisitor(JavaParserVisitor):
             'end_index': -1
         }
 
-    def _apply_max_line_length_line(self, line: str) -> str:
-        if len(line) <= self.config.max_line_length:
-            return line
-
-        indent = ''
-        for char in line:
-            if char == " " or char == "\t":
-                indent += char
-            else:
-                break
-
-        if '"' in line or "'" in line:
-            in_string = False
-            string_type = None
-            string_positions = []
-            string_start = -1
-
-            for i, char in enumerate(line):
-                if not in_string and (char == '"' or char == "'"):
-                    in_string = True
-                    string_type = char
-                    string_start = i
-                elif in_string and char == string_type and line[i-1] != '\\':
-                    in_string = False
-                    string_positions.append((string_start, i))
-
-            if in_string:
-                string_positions.append((string_start, len(line) - 1))
-
-            if string_positions:
-                start, end = string_positions[0]
-                before_string = line[:start]
-                string_literal = line[start:end+1]
-                after_string = line[end+1:]
-
-                if len(string_literal) > self.config.max_line_length:
-                    string_content = string_literal[1:-1]  # Remove quotes
-                    split_strings = []
-                    current_part = ''
-
-                    for word in string_content.split(" "):
-                        if len(before_string) + len(current_part.strip()) + len(word) + 3 > self.config.max_line_length:  # 3 accounts for '" + "'
-                            split_strings.append(current_part)
-                            current_part = word
-                        else:
-                            if current_part:
-                                current_part += ' '
-                            current_part += word
-
-                    if current_part:
-                        split_strings.append(current_part)
-
-                    formatted_string = f'{string_type}\n {indent}    + {string_type}'.join(split_strings)
-                    new_line = f"{before_string}{string_type}{formatted_string}{string_type}{after_string}"
-                    return new_line
-
-        line = line[len(indent):]
-        words = line.split(" ")
-        new_line = ''
-        current_line = ''
-        for word in words:
-            if len(current_line) + len(word) > self.config.max_line_length:
-                new_line += current_line + "\n" + indent
-                current_line = word + " "
-            else:
-                current_line += word + " "
-        new_line += current_line.strip()
-        return indent + new_line
-
-    def _apply_max_line_length(self, text: str) -> str:
-        if self.config.max_line_length == -1:
-            return text
-        return "\n".join([self._apply_max_line_length_line(line) for line in text.split("\n")])
-    
     def visitImportDeclaration(self, ctx: JavaParser.ImportDeclarationContext):
         if self.config.imports["merge"] == True:
             if self.rewriter.getTokenStream().get(ctx.stop.tokenIndex+1).type in [JavaParser.WS]:
@@ -165,7 +90,6 @@ class FormattingVisitor(JavaParserVisitor):
     def visitMethodDeclaration(self, ctx: JavaParser.MethodDeclarationContext):
         return_type = ctx.typeTypeOrVoid().getText()
         method_name = ctx.identifier().getText()
-        arguments : JavaParser.formalParameters = ctx.formalParameters()
         modifiers = []
         parent = ctx.parentCtx  
         grandparent: Optional[JavaParser.StatementContext] = None
@@ -180,16 +104,6 @@ class FormattingVisitor(JavaParserVisitor):
 
         if grandparent: 
             self.rewriter.replaceRangeTokens(grandparent.start, ctx.identifier().stop, f"\n{self._get_indent()}{method_signature}")
-        
-        if arguments:
-            open_paren = arguments.LPAREN().getSymbol()
-            close_paren = arguments.RPAREN().getSymbol()
-            parameters = arguments.formalParameterList()
-            if parameters:
-                parameter_size = int((parameters.getChildCount() + 1) / 2)
-
-                if parameter_size > 1 and self.config.aligns['after_open_bracket'] != False:
-                    self._apply_bracket_alignment(open_paren, parameters, close_paren, parameter_size)
 
         return self.visitChildren(ctx)
     
@@ -267,22 +181,6 @@ class FormattingVisitor(JavaParserVisitor):
         self.rewriter.replaceSingleToken(close_brace, f"\n{self._get_indent()}" + "}")
         return self.visitChildren(ctx)
 
-    def visitMethodCall(self, ctx: JavaParser.MethodCallContext):
-        arguments : JavaParser.ArgumentsContext = ctx.arguments()
-        if arguments:
-            open_paren : CommonToken = arguments.LPAREN().getSymbol()
-            close_paren : CommonToken = arguments.RPAREN().getSymbol()
-            parameters : JavaParser.ExpressionListContext = arguments.expressionList()
-            if not parameters:
-                return self.visitChildren(ctx)
-            
-            parameter_size = int((parameters.getChildCount() + 1) / 2) # Getting the actual number of parameters
-            
-            if parameter_size > 1 and self.config.aligns['after_open_bracket'] != False:
-                self._apply_bracket_alignment(open_paren, parameters, close_paren, parameter_size)
-
-        return self.visitChildren(ctx)
-
     def _apply_bracket_alignment(self, open_paren, parameters, close_paren, parameter_size):
         match self.config.aligns['after_open_bracket']:
             case 'align':
@@ -330,7 +228,7 @@ class FormattingVisitor(JavaParserVisitor):
         token_stream = self.rewriter.getTokenStream()
         token_index = open_paren.tokenIndex
         spacer_length = 0
-        while token_stream.get(token_index).line == open_paren.line:
+        while token_stream.get(token_index).type != JavaParser.WS:
             spacer_length += len(token_stream.get(token_index).text)
             token_index -= 1
 
@@ -456,4 +354,4 @@ class FormattingVisitor(JavaParserVisitor):
 
             
         formatted_text: str = self.rewriter.getDefaultText()
-        return self._apply_max_line_length(formatted_text)
+        return formatted_text
