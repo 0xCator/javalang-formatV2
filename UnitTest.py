@@ -6,6 +6,7 @@ from FormattingVisitor import FormattingVisitor
 from ConfigClass import ConfigClass
 import textwrap
 import logging
+import re
 
 # Configure logging to track test failures
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -50,6 +51,12 @@ def config():
 def format_java(java_code, custom_config=None):
     """Helper function to format Java code using the FormattingVisitor"""
     try:
+        cleaned_code = re.sub(r'[\t\n]+', '', java_code)  # Remove tabs and newlines
+        cleaned_code = re.sub(r' {2,}', ' ', cleaned_code)
+        cleaned_code = re.sub(r'^ +', '', cleaned_code, flags=re.M)
+
+        java_code = cleaned_code
+
         input_stream = InputStream(java_code)
         lexer = JavaLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
@@ -158,6 +165,7 @@ def test_brace_style_attach(config):
     """
     
     formatted = format_java(java_code, config)
+
     try:
         assert "public class Test {" in formatted
         assert "public void testMethod() {" in formatted
@@ -180,6 +188,7 @@ def test_brace_style_new_line(config):
     """
     
     formatted = format_java(java_code, config)
+    print(formatted)
     try:
         assert "public class Test\n{" in formatted
         assert "public void testMethod()\n" in formatted
@@ -595,6 +604,7 @@ def test_empty_class(config):
     """
     
     formatted = format_java(java_code, config)
+    print("AAAA" + formatted)
     
     try:
         # Check that empty class is properly formatted
